@@ -1,17 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 class AppConstants {
-  // Use 10.0.2.2 for Android Emulator, localhost for Web/Windows, or your physical IP
+  // Use localhost for Web, or your physical device/emulator IP for Android/iOS
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5000/api';
-    if (Platform.isAndroid) {
-      // Check if running on emulator or physical device
-      // 10.0.2.2 is the special alias to your host loopback interface
-      return 'http://192.168.1.39:5000/api'; // Using laptop IP for physical device/emulator
-    }
-    return 'http://192.168.1.39:5000/api';
+    return 'http://192.168.1.39:5000/api'; // Using laptop IP for physical device/emulator
   }
   
   static const Color primaryColor = Color(0xFF2196F3);

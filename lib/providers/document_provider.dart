@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'package:antigravity/stubs/io_stub.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
