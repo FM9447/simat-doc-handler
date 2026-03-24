@@ -33,4 +33,6 @@ flutter run -d chrome
 2. Choose Branch: `main` and Folder: `/docs` then Save.
 3. The site will appear at `https://<your-username>.github.io/simat-doc-handler/`.
 
+The `docs/` folder contains a `docs/.nojekyll` file which prevents GitHub Pages from running Jekyll on the static HTML files. This avoids SCSS build errors when no Jekyll configuration is present.
+
 You can use the `docs/` page as a lightweight landing page for your web testing workflow.
