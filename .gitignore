@@ -1,3 +1,42 @@
+# Node
+node_modules/
+**/node_modules/
+
+# Flutter/Dart
+.dart_tool/
+build/
+/build/
+/.packages
+/.pub-cache/
+pubspec.lock
+
+# Android
+**/local.properties
+**/.gradle/
+**/gradle-wrapper.jar
+
+# Xcode
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+Pods/
+Podfile.lock
+
+# VSCode
+.vscode/
+
+# Secrets
+.env
+*.jks
+*.keystore
+**/google-services.json
+**/GoogleService-Info.plist
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
 # Miscellaneous
 *.class
 *.log

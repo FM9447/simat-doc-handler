@@ -1,0 +1,5 @@
+package com.simat.doctransit
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

@@ -1,0 +1,40 @@
+# antigravity
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+
+## Website / Web testing
+
+This project includes a basic site in the `docs/` folder suitable for GitHub Pages and quick web testing.
+
+- To run the app locally in Chrome:
+
+```powershell
+flutter pub get
+flutter run -d chrome
+```
+
+- To publish the `docs/` folder using GitHub Pages:
+
+1. Go to the repository on GitHub → Settings → Pages.
+2. Choose Branch: `main` and Folder: `/docs` then Save.
+3. The site will appear at `https://<your-username>.github.io/simat-doc-handler/`.
+
+You can use the `docs/` page as a lightweight landing page for your web testing workflow.
+
+
+okay we need to do like make the input from student to get better including more customization for admin to control theflow it should be fully like how a document orrequest so on goes 
+make notification work

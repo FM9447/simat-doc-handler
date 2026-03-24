@@ -1,0 +1,17 @@
+{
+  "name": "antigravity-root",
+  "version": "1.0.0",
+  "description": "Root management for AntiGravity project",
+  "scripts": {
+    "backend": "cd backend && npm start",
+    "frontend": "cd flutter_app && flutter run -d chrome --web-port 3005",
+    "mobile": "cd flutter_app && flutter run",
+    "dev": "npm run seed && npm run approve && npm run backend",
+    "seed": "cd backend && node seed_flows.js",
+    "approve": "cd backend && node approve_users.js",
+    "install-all": "npm install && cd backend && npm install && cd ../flutter_app && flutter pub get"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

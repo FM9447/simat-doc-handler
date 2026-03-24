@@ -1,36 +1,43 @@
-# antigravity
+# AntiGravity - Digital Document Approval System
 
-A new Flutter project.
+This is the fully generated source code for AntiGravity.
 
-## Getting Started
+## Project Structure
+- `backend/`: Node.js, Express, MongoDB REST API.
+- `flutter_app/`: Flutter 3.19+ cross-platform mobile application utilizing Riverpod for state management.
 
-This project is a starting point for a Flutter application.
+## Prerequisites
+1. **Node.js**: v18+ installed on your system.
+2. **MongoDB**: A running MongoDB instance or MongoDB Atlas cluster.
+3. **Flutter**: v3.19+ installed and added to PATH.
 
-A few resources to get you started if this is your first Flutter project:
+## ⚡ Quick Start (Recommended)
+You can now manage the whole project from the root folder:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+1.  **Backend Setup & Start**:
+    ```bash
+    npm run dev
+    ```
+    *This will automatically seed document types, approve all users, and start the server.*
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2.  **Frontend Start**:
+    ```bash
+    flutter run
+    ```
+    *Make sure you are in the `flutter_app/` folder or use `npm run frontend` from the root.*
 
-## Website / Web testing
+## 🛠️ Individual Commands (Root)
+- `npm run dev`: All-in-one Backend setup (Seed + Approve + Server). 🚀
+- `npm run backend`: Starts only the Node.js server.
+- `npm run seed`: Populates initial document flows (Bonafide, TC, etc.).
+- `npm run approve`: Approves all users instantly for testing.
+- `npm run install-all`: Installs dependencies for both Backend and Frontend.
 
-This project includes a basic site in the `docs/` folder suitable for GitHub Pages and quick web testing.
+## 📱 Platform Support
+The app automatically detects the environment:
+- **Web**: Connects to `localhost:5000`.
+- **Android Emulator**: Connects to `10.0.2.2:5000`.
+- **Physical Mobile**: Connects to `192.168.1.39:5000` (Make sure phone is on the SAME Wi-FI).
 
-- To run the app locally in Chrome:
-
-```powershell
-flutter pub get
-flutter run -d chrome
-```
-
-- To publish the `docs/` folder using GitHub Pages:
-
-1. Go to the repository on GitHub → Settings → Pages.
-2. Choose Branch: `main` and Folder: `/docs` then Save.
-3. The site will appear at `https://<your-username>.github.io/simat-doc-handler/`.
-
-You can use the `docs/` page as a lightweight landing page for your web testing workflow.
+---
+*For detailed administrative features, please refer to the internal walkthrough.*
