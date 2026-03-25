@@ -2,40 +2,75 @@ const admin = require('firebase-admin');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 
-// Initialize Firebase Admin
-try {
-  let serviceAccount;
+function initializeFirebase() {
+  if (admin.apps.length > 0) return true;
+
+  console.log('--- 🚀 Firebase Admin: Initializing... ---');
   
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    // If provided via Environment Variable (Best for Production/Azure)
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    debugPrint('✅ Firebase Admin: Using Environment Variable');
-  } else {
-    // Fallback to local file (Good for local development)
-    serviceAccount = require('../firebase-service-account.json');
-    debugPrint('✅ Firebase Admin: Using local JSON file');
-  }
+  const tryInitialize = (serviceAccount, source) => {
+    try {
+      if (!serviceAccount || !serviceAccount.private_key) {
+        throw new Error(`Missing mandatory fields in service account from ${source}`);
+      }
 
-  if (serviceAccount && serviceAccount.private_key) {
-    let key = serviceAccount.private_key;
-    // Replace literal \n with actual newlines if they are escaped as strings
-    key = key.replace(/\\n/g, '\n');
-    
-    // Ensure standard PEM format
-    if (!key.includes('-----BEGIN PRIVATE KEY-----')) {
-      key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+      let key = serviceAccount.private_key;
+      
+      // Diagnostics: Log length and basic structure
+      const keyLength = key.length;
+      const hasBegin = key.includes('-----BEGIN PRIVATE KEY-----');
+      const hasEnd = key.includes('-----END PRIVATE KEY-----');
+      console.log(`📊 [${source}] Key Diagnostics: Length=${keyLength}, Has BEGIN=${hasBegin}, Has END=${hasEnd}`);
+
+      // Aggressive sanitization
+      key = key.replace(/\\n/g, '\n').trim();
+      
+      // Ensure standard PEM format
+      if (!key.includes('-----BEGIN PRIVATE KEY-----')) {
+        key = `-----BEGIN PRIVATE KEY-----\n${key.replace(/\s/g, '\n')}\n-----END PRIVATE KEY-----`;
+      }
+      
+      serviceAccount.private_key = key;
+
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount)
+        });
+        console.log(`✅ Firebase Admin: Initialized successfully via ${source}`);
+      }
+      return true;
+    } catch (error) {
+      console.error(`⚠️ [${source}] Initialization failed:`, error.message);
+      if (error.stack && error.stack.includes('ASN.1')) {
+        console.error('💡 TIP: This error usually means the private_key is truncated or malformed in your environment variables.');
+      }
+      return false;
     }
-    
-    serviceAccount.private_key = key;
+  };
+
+  // 1. Try Environment Variable first
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      if (tryInitialize(sa, 'ENV_VAR')) return true;
+    } catch (e) {
+      console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:', e.message);
+    }
   }
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log('✅ Firebase Admin: Cloud Messaging Initialized');
-} catch (error) {
-  console.error('⚠️ Firebase Admin initialization failed:', error.message);
+  // 2. Fallback to local file
+  try {
+    const sa = require('../firebase-service-account.json');
+    if (tryInitialize(sa, 'LOCAL_JSON')) return true;
+  } catch (e) {
+    console.error('❌ Local JSON file not found or invalid:', e.message);
+  }
+
+  console.error('🛑 Firebase Admin: ALL initialization attempts failed.');
+  return false;
 }
+
+// Initial attempt
+initializeFirebase();
 
 // Helper for cleaner logging
 function debugPrint(msg) {
@@ -77,14 +112,22 @@ class NotificationService {
           }
         }));
 
-        const response = (admin.apps.length > 0) 
+        // Ensure initialized before sending
+        if (admin.apps.length === 0) {
+          console.log('🔄 Attempting re-initialization of Firebase Admin...');
+          initializeFirebase();
+        }
+
+        const isInitialized = admin.apps.length > 0;
+        
+        const response = isInitialized 
           ? await admin.messaging().sendEach(messages)
           : { successCount: 0, responses: [] };
         
-        if (admin.apps.length > 0) {
+        if (isInitialized) {
           console.log(`Successfully sent push to ${user.name}:`, response.successCount);
         } else {
-          console.log(`Push skipped for ${user.name} (Firebase not initialized)`);
+          console.log(`❌ Push skipped for ${user.name} (Firebase could not be initialized)`);
         }
         
         // Optional: Clean up invalid tokens
