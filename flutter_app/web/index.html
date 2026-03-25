@@ -29,18 +29,23 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- Noto Font Fix to resolve "Could not find a set of Noto fonts" error -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+
   <title>DocTransit</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // Robust Base Href detection to fix AssetManifest.bin.json loading issues
+    (function () {
+      var base = document.querySelector('base');
+      if (base && base.getAttribute('href') === '$FLUTTER_BASE_HREF') {
+        base.setAttribute('href', '/');
+      }
+    })();
+  </script>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
