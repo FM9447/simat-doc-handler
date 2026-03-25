@@ -1,0 +1,29 @@
+  {
+    "project_info": {
+      "project_number": "177834521506",
+      "project_id": "doctransit",
+      "storage_bucket": "doctransit.firebasestorage.app"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:177834521506:android:35899a90304dae7c6738fb",
+          "android_client_info": {
+            "package_name": "com.simat.doctransit"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyCPwemIWGoX4nPnORXowlO18bc7QqLirFg"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }
