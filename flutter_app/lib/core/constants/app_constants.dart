@@ -39,7 +39,7 @@ class AppConstants {
     debugPrint('⚠️ Local server fallback to Cloud: $_currentBaseUrl');
   }
   
-  // docTransit Premium Palette
+  // DocTransit Premium Palette
   static const Color bgColor = Color(0xFF080810);
   static const Color surfaceColor = Color(0xFF0F0F1A);
   static const Color cardColor = Color(0xFF13131F);

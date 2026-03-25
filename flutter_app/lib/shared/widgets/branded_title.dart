@@ -33,7 +33,7 @@ class BrandedTitle extends StatelessWidget {
         ShaderMask(
           shaderCallback: (r) => AppColors.primaryGradient.createShader(r),
           child: Text(
-            'docTransit',
+            'DocTransit',
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w900,

@@ -196,7 +196,7 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             const Icon(Icons.description_outlined, size: 48, color: AppColors.hint),
                             const SizedBox(height: 12),
-                            Text('Welcome to docTransit', style: AppTypography.headingMedium),
+                            Text('Welcome to DocTransit', style: AppTypography.headingMedium),
                             const SizedBox(height: 4),
                             Text('Submit your first document request to get started.', style: AppTypography.bodyMuted, textAlign: TextAlign.center),
                           ],

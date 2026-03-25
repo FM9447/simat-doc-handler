@@ -1,6 +1,6 @@
 {
-    "name": "docTransit",
-    "short_name": "docTransit",
+    "name": "DocTransit",
+    "short_name": "DocTransit",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#080810",

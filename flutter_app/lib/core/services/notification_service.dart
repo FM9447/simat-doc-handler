@@ -41,7 +41,7 @@ class NotificationService {
       if (androidPlugin != null) {
         await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
           'doctransit_channel',
-          'docTransit Notifications',
+          'DocTransit Notifications',
           description: 'Used for important document status updates.',
           importance: Importance.max,
           playSound: true,
@@ -77,7 +77,7 @@ class NotificationService {
     try {
       const androidDetails = AndroidNotificationDetails(
         'doctransit_channel',
-        'docTransit Notifications',
+        'DocTransit Notifications',
         importance: Importance.max,
         priority: Priority.high,
       );

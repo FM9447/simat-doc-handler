@@ -62,7 +62,7 @@ class DocTransitApp extends ConsumerWidget {
     });
 
     return MaterialApp(
-      title: 'docTransit',
+      title: 'DocTransit',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,

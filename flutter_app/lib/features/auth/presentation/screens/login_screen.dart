@@ -116,7 +116,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ShaderMask(
                             shaderCallback: (r) => AppColors.primaryGradient.createShader(r),
                             child: const Text(
-                              'docTransit',
+                              'DocTransit',
                               style: TextStyle(
                                 fontSize: 48,
                                 fontWeight: FontWeight.w900,

@@ -129,7 +129,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               child: ShaderMask(
                                 shaderCallback: (r) => AppColors.primaryGradient.createShader(r),
                                 child: const Text(
-                                  'docTransit',
+                                  'DocTransit',
                                   style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -2.5),
                                 ),
                               ),
