@@ -9,6 +9,7 @@ on:
       - 'flutter_app/**'
       - '.github/workflows/main_doctransit.yml'
 
+# Suppress Node.js deprecation warnings by using Node 24
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -17,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6 # Latest v6 for full Node 24 compatibility
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -38,7 +39,7 @@ jobs:
         working-directory: flutter_app
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v4 # Optimized for the latest runners
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./flutter_app/build/web
