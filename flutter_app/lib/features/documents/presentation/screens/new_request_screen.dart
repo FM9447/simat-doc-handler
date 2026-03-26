@@ -33,6 +33,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
   Uint8List? _fileBytes;
   String?   _fileName;
   bool      _isSubmitting = false;
+  bool      _iAgree       = false;
 
   late ConfettiController _confettiCtrl;
   final Map<String, TextEditingController> _fieldCtrls  = {};
@@ -62,6 +63,11 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
 
   void _submit(WorkflowModel flow) {
     if (_isSubmitting) return;
+    if (!_iAgree) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please agree to the terms and conditions'), backgroundColor: AppColors.pending));
+      return;
+    }
     
     final hasForms    = flow.isFormBased || flow.visibleFields.isNotEmpty;
     final Map<String, String> formData = {};
@@ -287,7 +293,19 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
+                  CheckboxListTile(
+                    title: const Text('I agree to the terms and conditions and certify that the information provided is accurate.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                    value: _iAgree,
+                    onChanged: (v) => setState(() => _iAgree = v ?? false),
+                    activeColor: AppColors.primary,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+
+                  const SizedBox(height: 20),
                   GradientButton(
                     text: _isSubmitting ? 'Sending...' : 'Submit Request',
                     icon: _isSubmitting ? Icons.hourglass_empty_rounded : Icons.send_rounded,
