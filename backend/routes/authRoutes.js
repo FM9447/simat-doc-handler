@@ -12,6 +12,57 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
+// @desc    Get API Version
+// @route   GET /api/auth/version
+router.get('/version', (req, res) => {
+  res.json({ version: '1.0.1', deployedAt: '2026-03-27' });
+});
+
+// @desc    Get user by ID (Admin only)
+// @route   GET /api/auth/users/:id
+router.get('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('departmentId', 'name')
+      .populate('tutorId', 'name email');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Delete user with reassignment (Admin only)
+// @route   DELETE /api/auth/users/:id
+router.delete('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const reassignToId = req.query.reassignToId || req.body.reassignToId;
+    const Document = require('../models/Document');
+    const Department = require('../models/Department');
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (['tutor', 'hod', 'principal', 'office'].includes(user.role)) {
+      if (!reassignToId) {
+        return res.status(400).json({ message: `Staff account (${user.role.toUpperCase()}) requires a reassignment target.` });
+      }
+      const target = await User.findById(reassignToId);
+      if (!target) return res.status(404).json({ message: 'Reassignment target user not found' });
+      
+      await Document.updateMany({ [`assigned.${user.role}.id`]: userId }, { $set: { [`assigned.${user.role}.id`]: target._id, [`assigned.${user.role}.name`]: target.name } });
+      if (user.role === 'tutor') await User.updateMany({ tutorId: userId }, { $set: { tutorId: target._id } });
+      if (user.role === 'hod') await Department.updateMany({ hodId: userId }, { $set: { hodId: target._id } });
+    }
+    await User.findByIdAndDelete(userId);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -313,88 +364,7 @@ router.put('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
   }
 });
 
-// @desc    Get user by ID (Admin only)
-// @route   GET /api/auth/users/:id
-router.get('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-      .select('-password')
-      .populate('departmentId', 'name')
-      .populate('tutorId', 'name');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
-// @desc    Delete user with reassignment (Admin only)
-// @route   DELETE /api/auth/users/:id
-router.delete('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const reassignToId = req.query.reassignToId || req.body.reassignToId;
-    const Document = require('../models/Document');
-    const Department = require('../models/Department');
-
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // 1. Logic for staff reassignment (Tutor, HOD, Principal, Office)
-    if (['tutor', 'hod', 'principal', 'office'].includes(user.role)) {
-      if (!reassignToId) {
-        return res.status(400).json({ message: `Staff account (${user.role.toUpperCase()}) requires a reassignment target for pending requests.` });
-      }
-
-      const target = await User.findById(reassignToId);
-      if (!target) return res.status(404).json({ message: 'Reassignment target user not found' });
-      if (target.role !== user.role && user.role !== 'tutor') {
-         // Tutors/HODs might be flexible, but generally same role is safer
-         console.warn(`Reassigning ${user.role} to ${target.role}`);
-      }
-
-      console.log(`DELETION: Reassigning data from ${user.name} (${user.role}) to ${target.name}`);
-
-      // A. Update Pending Documents
-      // We look for any document where this user is currently assigned in ANY role
-      const updateResult = await Document.updateMany(
-        { [`assigned.${user.role}.id`]: userId },
-        { 
-          $set: { 
-            [`assigned.${user.role}.id`]: target._id,
-            [`assigned.${user.role}.name`]: target.name 
-          } 
-        }
-      );
-      console.log(`- Updated ${updateResult.modifiedCount} documents.`);
-
-      // B. Update Student Assignments (if Tutor)
-      if (user.role === 'tutor') {
-        const studentResult = await User.updateMany(
-          { tutorId: userId },
-          { $set: { tutorId: target._id } }
-        );
-        console.log(`- Updated ${studentResult.modifiedCount} students' tutor settings.`);
-      }
-
-      // C. Update Department HOD (if HOD)
-      if (user.role === 'hod') {
-        const deptResult = await Department.updateMany(
-          { hodId: userId },
-          { $set: { hodId: target._id } }
-        );
-        console.log(`- Updated ${deptResult.modifiedCount} departments' HOD settings.`);
-      }
-    }
-
-    // 2. Final deletion
-    await User.findByIdAndDelete(userId);
-    res.json({ message: 'User deleted successfully and data reassigned if applicable.' });
-  } catch (error) {
-    console.error('Delete error:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
 
 // @desc    Update FCM Token
 // @route   POST /api/auth/fcm-token
