@@ -1,0 +1,41 @@
+name: Deploy DocTransit Web to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - 'flutter_app/**'
+      - '.github/workflows/main_doctransit.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+        working-directory: flutter_app
+
+      - name: Build Web
+        run: flutter build web --release
+        working-directory: flutter_app
+
+      - name: Add CNAME
+        run: echo "doctransit.live" > build/web/CNAME
+        working-directory: flutter_app
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./flutter_app/build/web
