@@ -55,9 +55,9 @@ class DocTransitApp extends ConsumerWidget {
     // Global listener for auth state to handle forced logout
     ref.listen<AsyncValue<UserModel?>>(authProvider, (previous, next) {
       final prevUser = previous?.asData?.value;
-      final nextUser = next.asData?.value;
       
-      if (nextUser == null && prevUser != null) {
+      // ONLY redirect to Login if we are CERTAIN we have no user (not just loading)
+      if (next.hasValue && next.value == null && prevUser != null) {
         debugPrint('🚪 [Auth] Session invalid or logged out. Redirecting...');
         navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen()),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/constants/app_constants.dart';
@@ -13,11 +14,18 @@ class ApiService {
   void Function()? onUnauthorized;
 
   Future<Map<String, String>> _getHeaders({bool includeContentType = false}) async {
-    final token = await _storage.read(key: AppConstants.tokenKey);
-    return {
-      if (includeContentType) 'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
+    try {
+      final token = await _storage.read(key: AppConstants.tokenKey);
+      return {
+        if (includeContentType) 'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+    } catch (e) {
+      debugPrint('⚠️ [API] Failed to read token from storage: $e');
+      return {
+        if (includeContentType) 'Content-Type': 'application/json',
+      };
+    }
   }
 
   Future<dynamic> post(String endpoint, Map<String, dynamic> body) async {
@@ -83,12 +91,22 @@ class ApiService {
   dynamic _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return null;
-      return jsonDecode(response.body);
+      try {
+        return jsonDecode(response.body);
+      } catch (e) {
+        debugPrint('⚠️ [API] JSON Decode failed: ${response.body}');
+        return response.body; // Return raw body if not JSON
+      }
     } else {
       if (response.statusCode == 401) {
         onUnauthorized?.call();
       }
-      throw Exception(jsonDecode(response.body)['message'] ?? 'API Error');
+      try {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'API Error (${response.statusCode})');
+      } catch (_) {
+        throw Exception('API Error (${response.statusCode}): ${response.body}');
+      }
     }
   }
 }
