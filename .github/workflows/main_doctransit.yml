@@ -25,7 +25,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.2'
+          flutter-version: '3.41.0' # Upgraded to satisfy syncfusion requirements
           channel: 'stable'
           cache: true
 
@@ -34,7 +34,6 @@ jobs:
         working-directory: flutter_app
 
       - name: Run Code Generation
-        # THIS STEP IS MANDATORY for Freezed/Riverpod projects
         run: flutter pub run build_runner build --delete-conflicting-outputs
         working-directory: flutter_app
 
