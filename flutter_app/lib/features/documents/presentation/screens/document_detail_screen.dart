@@ -760,57 +760,116 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final titleCtrl = TextEditingController(text: widget.document.title);
     final descCtrl = TextEditingController(text: widget.document.description);
     final headingCtrl = TextEditingController(text: widget.document.customHeading ?? '');
+    
+    // Get the workflow definition to know which fields are editable
+    final flows = ref.read(workflowProvider).value ?? [];
+    final currentFlow = flows.firstWhere(
+      (f) => f.name == widget.document.flow || f.name == widget.document.category,
+      orElse: () => WorkflowModel(name: '', steps: []),
+    );
+    
+    final Map<String, TextEditingController> dynamicCtrls = {};
+    final Map<String, dynamic> dynamicValues = {};
+    
+    if (widget.document.formData != null) {
+      widget.document.formData!.forEach((key, value) {
+        if (value is bool) {
+          dynamicValues[key] = value;
+        } else {
+          dynamicCtrls[key] = TextEditingController(text: value?.toString() ?? '');
+        }
+      });
+    }
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
-        title: Text('Edit Document Details', style: AppTypography.headingSmall),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleCtrl,
-                style: const TextStyle(color: AppColors.foreground),
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: headingCtrl,
-                style: const TextStyle(color: AppColors.foreground),
-                decoration: const InputDecoration(labelText: 'Custom Heading (for PDF)'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descCtrl,
-                style: const TextStyle(color: AppColors.foreground),
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
-              ),
-            ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => AlertDialog(
+          backgroundColor: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
+          title: Text('Edit Document Details', style: AppTypography.headingSmall),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  style: const TextStyle(color: AppColors.foreground),
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                const SizedBox(height: 12),
+                if (currentFlow.allowCustomHeading) ...[
+                  TextField(
+                    controller: headingCtrl,
+                    style: const TextStyle(color: AppColors.foreground),
+                    decoration: const InputDecoration(labelText: 'Custom Heading (for PDF)'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                TextField(
+                  controller: descCtrl,
+                  style: const TextStyle(color: AppColors.foreground),
+                  decoration: const InputDecoration(labelText: 'Description'),
+                  maxLines: 2,
+                ),
+                
+                if (dynamicCtrls.isNotEmpty || dynamicValues.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Divider(color: AppColors.border),
+                  const SizedBox(height: 10),
+                  Text('FORM DATA', style: AppTypography.labelSmall.copyWith(fontSize: 10, color: AppColors.primary)),
+                  const SizedBox(height: 12),
+                  ...dynamicCtrls.entries.map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      controller: e.value,
+                      style: const TextStyle(color: AppColors.foreground, fontSize: 13),
+                      decoration: InputDecoration(labelText: e.key),
+                    ),
+                  )),
+                  ...dynamicValues.entries.map((e) => CheckboxListTile(
+                    title: Text(e.key, style: const TextStyle(color: AppColors.foreground, fontSize: 13)),
+                    value: dynamicValues[e.key],
+                    onChanged: (v) => setModalState(() => dynamicValues[e.key] = v),
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: AppColors.primary,
+                  )),
+                ],
+              ],
+            ),
           ),
-        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           GradientButton(
             text: 'Save Changes',
             onPressed: () async {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
+              
+              // Collect form data
+              final Map<String, dynamic> updatedFormData = {};
+              if (widget.document.formData != null) {
+                widget.document.formData!.forEach((key, value) {
+                  if (value is bool) {
+                    updatedFormData[key] = dynamicValues[key];
+                  } else {
+                    updatedFormData[key] = dynamicCtrls[key]?.text;
+                  }
+                });
+              }
+
               try {
                 await ref.read(documentListProvider.notifier).updateDocument(
                   id: widget.document.id,
                   title: titleCtrl.text,
                   description: descCtrl.text,
                   customHeading: headingCtrl.text,
+                  formData: updatedFormData.isNotEmpty ? updatedFormData : null,
                 );
                 if (mounted) {
                   Navigator.pop(ctx);
                   scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Document updated successfully')));
-                  // Note: Since we refresh the list, we might need to pop this screen or update local state
-                  // Simple approach: Navigate back to the list
-                  Navigator.pop(context);
+                  Navigator.pop(context); // Go back to list
                 }
               } catch (e) {
                 scaffoldMessenger.showSnackBar(SnackBar(content: Text('Update failed: $e'), backgroundColor: AppColors.rejected));
@@ -820,8 +879,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _chip(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),

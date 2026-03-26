@@ -714,9 +714,13 @@ class _WorkflowEditorDialogState extends ConsumerState<WorkflowEditorDialog> {
 
   void _showEditFieldDialog(WorkflowElement el) {
     final labelCtrl = TextEditingController(text: el.label);
+    final placeholderCtrl = TextEditingController(text: el.placeholder);
+    final hintCtrl = TextEditingController(text: el.hint);
+    final patternCtrl = TextEditingController(text: el.pattern ?? '');
     String type = el.type;
     String sysKey = el.sysKey ?? 'name';
     bool isRequired = el.required;
+    bool isVisible = el.visible;
 
     showDialog(
       context: context,
@@ -730,9 +734,17 @@ class _WorkflowEditorDialogState extends ConsumerState<WorkflowEditorDialog> {
               children: [
                 _buildDialogField('Label', labelCtrl),
                 if (el.kind == 'field') ...[
-                  const SizedBox(height: 16),
-                  _buildDialogDropdown('Type', type, ['text', 'number', 'date', 'textarea'], (v) => setModalState(() => type = v!)),
-                  CheckboxListTile(title: const Text('Required', style: TextStyle(color: Colors.white, fontSize: 13)), value: isRequired, onChanged: (v) => setModalState(() => isRequired = v!), dense: true),
+                  const SizedBox(height: 12),
+                  _buildDialogDropdown('Type', type, ['text', 'number', 'date', 'textarea', 'select', 'checkbox'], (v) => setModalState(() => type = v!)),
+                  const SizedBox(height: 12),
+                  _buildDialogField('Placeholder', placeholderCtrl),
+                  const SizedBox(height: 12),
+                  _buildDialogField('Hint Text', hintCtrl),
+                  const SizedBox(height: 12),
+                  _buildDialogField('Regex Pattern (Optional)', patternCtrl),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(title: const Text('Required', style: TextStyle(color: Colors.white, fontSize: 13)), value: isRequired, onChanged: (v) => setModalState(() => isRequired = v!), dense: true, contentPadding: EdgeInsets.zero),
+                  CheckboxListTile(title: const Text('Visible to Student', style: TextStyle(color: Colors.white, fontSize: 13)), value: isVisible, onChanged: (v) => setModalState(() => isVisible = v!), dense: true, contentPadding: EdgeInsets.zero),
                 ] else if (el.kind == 'system') ...[
                   const SizedBox(height: 16),
                   _buildDialogDropdown('System Value', sysKey, ['name', 'registerNo', 'dept', 'course', 'sem', 'year', 'division'], (v) => setModalState(() => sysKey = v!)),
@@ -746,7 +758,16 @@ class _WorkflowEditorDialogState extends ConsumerState<WorkflowEditorDialog> {
               setState(() {
                 final idx = elements.indexWhere((e) => e.id == el.id);
                 if (idx != -1) {
-                  elements[idx] = el.copyWith(label: labelCtrl.text, type: type, sysKey: sysKey, required: isRequired);
+                  elements[idx] = el.copyWith(
+                    label: labelCtrl.text,
+                    placeholder: placeholderCtrl.text,
+                    hint: hintCtrl.text,
+                    pattern: patternCtrl.text.isNotEmpty ? patternCtrl.text : null,
+                    type: type,
+                    sysKey: sysKey,
+                    required: isRequired,
+                    visible: isVisible,
+                  );
                 }
               });
               Navigator.pop(context); 

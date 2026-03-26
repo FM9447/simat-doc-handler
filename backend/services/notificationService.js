@@ -180,9 +180,9 @@ class NotificationService {
 
   static _getDisplayName(type) {
     switch (type) {
-      case 'ok': return '✅ docTransit Approval';
-      case 'err': return '❌ docTransit Update';
-      default: return '🔔 docTransit Notification';
+      case 'ok': return '✅ DocTransit Approval';
+      case 'err': return '❌ DocTransit Update';
+      default: return '🔔 DocTransit Notification';
     }
   }
 }

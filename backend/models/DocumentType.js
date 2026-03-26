@@ -7,6 +7,9 @@ const elementSchema = mongoose.Schema({
   type: { type: String, enum: ['text', 'number', 'date', 'textarea', 'select', 'checkbox'], default: 'text' },
   required: { type: Boolean, default: false },
   visible: { type: Boolean, default: true },
+  placeholder: { type: String, default: '' },
+  hint: { type: String, default: '' },
+  pattern: { type: String, default: '' }, // regex for validation
   options: [{ type: String }],
   sysKey: { type: String },
   content: { type: String },

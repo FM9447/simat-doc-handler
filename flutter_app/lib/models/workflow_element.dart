@@ -5,6 +5,9 @@ class WorkflowElement {
   final String type; // text, number, date, textarea, select, checkbox
   final bool required;
   final bool visible;
+  final String placeholder;
+  final String hint;
+  final String? pattern;
   final List<String> options; // For select/dropdown
   final String? sysKey; // For system fields
   final String? content; // For header/address
@@ -23,6 +26,9 @@ class WorkflowElement {
     this.type = 'text',
     this.required = false,
     this.visible = true,
+    this.placeholder = '',
+    this.hint = '',
+    this.pattern,
     this.options = const [],
     this.sysKey,
     this.content,
@@ -41,6 +47,9 @@ class WorkflowElement {
       type: json['type'] ?? 'text',
       required: json['required'] ?? false,
       visible: json['visible'] ?? true,
+      placeholder: json['placeholder'] ?? '',
+      hint: json['hint'] ?? '',
+      pattern: json['pattern'],
       options: json['options'] != null ? List<String>.from(json['options']) : [],
       sysKey: json['sysKey'],
       content: json['content'],
@@ -59,6 +68,9 @@ class WorkflowElement {
     'type': type,
     'required': required,
     'visible': visible,
+    'placeholder': placeholder,
+    'hint': hint,
+    'pattern': pattern,
     'options': options,
     'sysKey': sysKey,
     'content': content,
@@ -76,6 +88,9 @@ class WorkflowElement {
     String? type,
     bool? required,
     bool? visible,
+    String? placeholder,
+    String? hint,
+    String? pattern,
     List<String>? options,
     String? sysKey,
     String? content,
@@ -92,6 +107,9 @@ class WorkflowElement {
       type: type ?? this.type,
       required: required ?? this.required,
       visible: visible ?? this.visible,
+      placeholder: placeholder ?? this.placeholder,
+      hint: hint ?? this.hint,
+      pattern: pattern ?? this.pattern,
       options: options ?? this.options,
       sysKey: sysKey ?? this.sysKey,
       content: content ?? this.content,

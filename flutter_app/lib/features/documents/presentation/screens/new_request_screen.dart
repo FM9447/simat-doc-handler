@@ -323,13 +323,26 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
     switch (el.type) {
       case 'text':
       case 'number':
+      case 'textarea':
         _fieldCtrls.putIfAbsent(label, () => TextEditingController());
         return TextFormField(
           controller: _fieldCtrls[label],
           keyboardType: el.type == 'number' ? TextInputType.number : TextInputType.text,
+          maxLines: el.type == 'textarea' ? 4 : 1,
           style: const TextStyle(color: AppColors.foreground),
-          decoration: InputDecoration(labelText: '$label${el.required ? ' *' : ''}'),
-          validator: el.required ? (v) => v!.isEmpty ? 'Required' : null : null,
+          decoration: InputDecoration(
+            labelText: '$label${el.required ? ' *' : ''}',
+            hintText: el.placeholder.isNotEmpty ? el.placeholder : null,
+            helperText: el.hint.isNotEmpty ? el.hint : null,
+            helperStyle: const TextStyle(fontSize: 10, color: AppColors.hint),
+          ),
+          validator: (v) {
+            if (el.required && (v == null || v.isEmpty)) return 'Required';
+            if (v != null && v.isNotEmpty && el.pattern != null && el.pattern!.isNotEmpty) {
+              if (!RegExp(el.pattern!).hasMatch(v)) return 'Invalid format';
+            }
+            return null;
+          },
         );
       case 'date':
         _fieldCtrls.putIfAbsent(label, () => TextEditingController());
@@ -339,6 +352,9 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
           style: const TextStyle(color: AppColors.foreground),
           decoration: InputDecoration(
             labelText: '$label${el.required ? ' *' : ''}',
+            hintText: el.placeholder.isNotEmpty ? el.placeholder : 'Select date',
+            helperText: el.hint.isNotEmpty ? el.hint : null,
+            helperStyle: const TextStyle(fontSize: 10, color: AppColors.hint),
             suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.muted),
           ),
           onTap: () async {
@@ -351,7 +367,12 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
       case 'select':
         return DropdownButtonFormField<String>(
           initialValue: _fieldValues[label] as String?,
-          decoration: InputDecoration(labelText: '$label${el.required ? ' *' : ''}'),
+          decoration: InputDecoration(
+            labelText: '$label${el.required ? ' *' : ''}',
+            hintText: el.placeholder.isNotEmpty ? el.placeholder : null,
+            helperText: el.hint.isNotEmpty ? el.hint : null,
+            helperStyle: const TextStyle(fontSize: 10, color: AppColors.hint),
+          ),
           dropdownColor: AppColors.card,
           style: const TextStyle(color: AppColors.foreground, fontSize: 14),
           items: el.options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
