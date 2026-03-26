@@ -259,24 +259,80 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
             actions: [
               TextButton.icon(
                 onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: ctx,
-                    builder: (c) => AlertDialog(
-                      backgroundColor: AppColors.card,
-                      title: Text('Delete User?', style: AppTypography.headingSmall),
-                      content: const Text('This action cannot be undone.', style: TextStyle(color: AppColors.muted)),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-                        GradientButton(text: 'Delete', outline: true,
-                            onPressed: () => Navigator.pop(c, true),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
-                    await ref.read(adminUserProvider.notifier).deleteUser(user.id);
-                    if (ctx.mounted) Navigator.pop(ctx);
+                  final bool isStaff = !['student', 'admin'].contains(user.role.toLowerCase());
+                  String? reassignedToId;
+
+                  if (isStaff) {
+                    final allUsers = ref.read(adminUserProvider).value ?? [];
+                    // Find eligible candidates (same role, approved, not this user)
+                    final candidates = allUsers.where((u) => 
+                      u.id != user.id && 
+                      u.role == user.role && 
+                      u.isApproved
+                    ).toList();
+
+                    if (candidates.isEmpty) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text('Cannot delete this ${user.role.toUpperCase()} yet. Please ensure there is another approved ${user.role.toUpperCase()} to take over their duties first.')),
+                      );
+                      return;
+                    }
+
+                    reassignedToId = await showDialog<String>(
+                      context: ctx,
+                      builder: (c) => AlertDialog(
+                        backgroundColor: AppColors.card,
+                        title: Text('Reassign Duties', style: AppTypography.headingSmall),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Deleting ${user.name} (${user.role.toUpperCase()}) requires reassigning their pending requests and students.', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                            const SizedBox(height: 16),
+                            const Text('Select Replacement staff:', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.maxFinite,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(labelText: 'Assign to'),
+                                dropdownColor: AppColors.card,
+                                items: candidates.map((u) => DropdownMenuItem(value: u.id, child: Text(u.name))).toList(),
+                                onChanged: (v) => reassignedToId = v,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+                          GradientButton(text: 'Reassign & Delete', 
+                              onPressed: () => Navigator.pop(c, reassignedToId),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+                        ],
+                      ),
+                    );
+                    
+                    if (reassignedToId == null) return;
+                  } else {
+                    final confirm = await showDialog<bool>(
+                      context: ctx,
+                      builder: (c) => AlertDialog(
+                        backgroundColor: AppColors.card,
+                        title: Text('Delete User?', style: AppTypography.headingSmall),
+                        content: const Text('This action cannot be undone.', style: TextStyle(color: AppColors.muted)),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                          GradientButton(text: 'Delete', outline: true,
+                              onPressed: () => Navigator.pop(c, true),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
                   }
+
+                  // Perform deletion
+                  await ref.read(adminUserProvider.notifier).deleteUser(user.id, reassignToId: reassignedToId);
+                  if (ctx.mounted) Navigator.pop(ctx);
                 },
                 icon: const Icon(Icons.delete_outline_rounded, color: AppColors.rejected, size: 18),
                 label: const Text('Delete', style: TextStyle(color: AppColors.rejected)),

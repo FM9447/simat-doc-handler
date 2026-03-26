@@ -285,7 +285,13 @@ router.put('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    if (role) user.role = role === 'teacher' ? 'tutor' : role;
+    if (role) {
+      const finalRole = role === 'teacher' ? 'tutor' : role;
+      if (finalRole === 'principal' && user.role !== 'principal' && user.role === 'student') {
+        return res.status(400).json({ message: 'Students cannot be promoted directly to Principal. Promote to Tutor/HOD first.' });
+      }
+      user.role = finalRole;
+    }
     if (dept !== undefined) user.dept = dept;
     if (isApproved !== undefined) user.isApproved = isApproved;
     
@@ -303,6 +309,89 @@ router.put('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
     await user.save();
     res.json({ message: 'User updated successfully' });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Get user by ID (Admin only)
+// @route   GET /api/auth/users/:id
+router.get('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('departmentId', 'name')
+      .populate('tutorId', 'name');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Delete user with reassignment (Admin only)
+// @route   DELETE /api/auth/users/:id
+router.delete('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const reassignToId = req.query.reassignToId || req.body.reassignToId;
+    const Document = require('../models/Document');
+    const Department = require('../models/Department');
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // 1. Logic for staff reassignment (Tutor, HOD, Principal, Office)
+    if (['tutor', 'hod', 'principal', 'office'].includes(user.role)) {
+      if (!reassignToId) {
+        return res.status(400).json({ message: `Staff account (${user.role.toUpperCase()}) requires a reassignment target for pending requests.` });
+      }
+
+      const target = await User.findById(reassignToId);
+      if (!target) return res.status(404).json({ message: 'Reassignment target user not found' });
+      if (target.role !== user.role && user.role !== 'tutor') {
+         // Tutors/HODs might be flexible, but generally same role is safer
+         console.warn(`Reassigning ${user.role} to ${target.role}`);
+      }
+
+      console.log(`DELETION: Reassigning data from ${user.name} (${user.role}) to ${target.name}`);
+
+      // A. Update Pending Documents
+      // We look for any document where this user is currently assigned in ANY role
+      const updateResult = await Document.updateMany(
+        { [`assigned.${user.role}.id`]: userId },
+        { 
+          $set: { 
+            [`assigned.${user.role}.id`]: target._id,
+            [`assigned.${user.role}.name`]: target.name 
+          } 
+        }
+      );
+      console.log(`- Updated ${updateResult.modifiedCount} documents.`);
+
+      // B. Update Student Assignments (if Tutor)
+      if (user.role === 'tutor') {
+        const studentResult = await User.updateMany(
+          { tutorId: userId },
+          { $set: { tutorId: target._id } }
+        );
+        console.log(`- Updated ${studentResult.modifiedCount} students' tutor settings.`);
+      }
+
+      // C. Update Department HOD (if HOD)
+      if (user.role === 'hod') {
+        const deptResult = await Department.updateMany(
+          { hodId: userId },
+          { $set: { hodId: target._id } }
+        );
+        console.log(`- Updated ${deptResult.modifiedCount} departments' HOD settings.`);
+      }
+    }
+
+    // 2. Final deletion
+    await User.findByIdAndDelete(userId);
+    res.json({ message: 'User deleted successfully and data reassigned if applicable.' });
+  } catch (error) {
+    console.error('Delete error:', error);
     res.status(500).json({ message: error.message });
   }
 });

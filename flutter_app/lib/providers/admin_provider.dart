@@ -25,8 +25,9 @@ class AdminNotifier extends StateNotifier<AsyncValue<List<UserModel>>> {
     await getUsers();
   }
 
-  Future<void> deleteUser(String userId) async {
-    await apiService.delete('/auth/users/$userId');
+  Future<void> deleteUser(String userId, {String? reassignToId}) async {
+    final queryParams = reassignToId != null ? '?reassignToId=$reassignToId' : '';
+    await apiService.delete('/auth/users/$userId$queryParams');
     await getUsers();
   }
 }
