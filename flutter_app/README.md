@@ -1,40 +1,32 @@
-# antigravity
+# DocTransit - Flutter Frontend
 
-A new Flutter project.
+Digital Student Document Handler for SIMAT Smart Campus.
+
+## Features
+- Secure document submission and tracking.
+- Progress monitoring and push notifications.
+- Professional PDF generation for official transcripts and letters.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1.  **Dependencies**: Run `flutter pub get` in the `flutter_app` directory.
+2.  **Firebase**: Ensure `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) are present in their respective app folders.
+3.  **Branding**: All assets (icons, splash, loading) use the custom **DocTransit** design.
 
-A few resources to get you started if this is your first Flutter project:
+## Platform Support
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **Android/iOS**: Native builds support full push notification integration.
+- **Web**: Optimized for hosting on GitHub Pages or custom domains (e.g., doctransit.live).
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Automated Deployment (GitHub Actions)
 
-## Website / Web testing
+This project is configured with a centralized GitHub Actions workflow located at `.github/workflows/main_doctransit.yml`.
 
-This project includes a basic site in the `docs/` folder suitable for GitHub Pages and quick web testing.
+- **Trigger**: Pushes to `main` or `master` branches.
+- **Action**: Automatically builds and deploys the latest web version to the `gh-pages` branch.
+- **Manual Step**: If the workflow file is not automatically pushed due to token restrictions, manually create it on GitHub using the content provided in the project root.
 
-- To run the app locally in Chrome:
+## Troubleshooting
 
-```powershell
-flutter pub get
-flutter run -d chrome
-```
-
-- To publish the `docs/` folder using GitHub Pages:
-
-1. Go to the repository on GitHub → Settings → Pages.
-2. Choose Branch: `main` and Folder: `/docs` then Save.
-3. The site will appear at `https://<your-username>.github.io/simat-doc-handler/`.
-
-You can use the `docs/` page as a lightweight landing page for your web testing workflow.
-
-
-okay we need to do like make the input from student to get better including more customization for admin to control theflow it should be fully like how a document orrequest so on goes 
-make notification work
+- **Asset Loading (Web)**: If `AssetManifest.bin.json` fails to load, verify the `base href` in `index.html`. We have implemented a robust detection script to handle standard deployment paths.
+- **Fonts (Web)**: Noto Sans is loaded via Google Fonts in the `index.html` head to prevent missing character warnings.

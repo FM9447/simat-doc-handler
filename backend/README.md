@@ -25,4 +25,6 @@ This is the backend for the SIMAT Smart Campus Document Handler and Campus Manag
    - `CLOUDINARY_CLOUD_NAME`
    - `CLOUDINARY_API_KEY`
    - `CLOUDINARY_API_SECRET`
-4. Run `npm run dev` to start the development server.
+28. **Firebase Admin Setup**:
+    - `FIREBASE_SERVICE_ACCOUNT_B64`: Base64 encoded JSON service account key (Highly Recommended for Cloud/Azure deployments to avoid JSON escaping/ASN.1 errors).
+29. Run `npm run dev` to start the development server.
