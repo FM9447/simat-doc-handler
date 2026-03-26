@@ -214,7 +214,7 @@ router.get('/users', protect, authorizeRoles('admin'), async (req, res) => {
     const users = await User.find({})
       .select('-password')
       .populate('departmentId', 'name')
-      .populate('tutorId', 'name');
+      .populate('tutorId', 'name email');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });

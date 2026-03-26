@@ -154,8 +154,20 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
               },
             );
           },
-          loading: () => const Center(child: LoadingLogo(size: 80)),
-          error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: AppColors.rejected))),
+          loading: () => const SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: 400,
+              child: Center(child: LoadingLogo(size: 80)),
+            ),
+          ),
+          error: (e, _) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: 400,
+              child: Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.rejected))),
+            ),
+          ),
         ),
       ),
       ),

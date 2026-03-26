@@ -40,25 +40,36 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Robust parsing for populated fields (handles both ObjectIds and populated Objects safely)
+    String? parseId(dynamic val) {
+      if (val is Map) return val['_id']?.toString() ?? val['id']?.toString();
+      return val?.toString();
+    }
+
+    String? parseName(dynamic val) {
+      if (val is Map) return val['name']?.toString();
+      return null;
+    }
+
     return UserModel(
-      id: json['_id'] ?? json['id'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      role: json['role'] ?? 'student',
-      registerNo: json['registerNo'],
-      dept: json['dept'],
-      departmentId: json['departmentId'] is Map ? json['departmentId']['_id'] : json['departmentId'],
-      departmentName: json['departmentId'] is Map ? json['departmentId']['name'] : null,
-      tutorId: json['tutorId'] is Map ? json['tutorId']['_id'] : json['tutorId'],
-      tutorName: json['tutorId'] is Map ? json['tutorId']['name'] : null,
-      year: json['year'],
-      division: json['division'],
-      hodOfDeptId: json['hodOfDeptId'],
-      signatureUrl: json['signatureUrl'],
-      token: json['token'],
-      isApproved: json['isApproved'] ?? false,
-      delegatedToId: json['delegatedTo'] is Map ? json['delegatedTo']['_id'] : json['delegatedTo'],
-      delegatedToName: json['delegatedTo'] is Map ? json['delegatedTo']['name'] : null,
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'student',
+      registerNo: json['registerNo']?.toString(),
+      dept: json['dept']?.toString(),
+      departmentId: parseId(json['departmentId']),
+      departmentName: parseName(json['departmentId']),
+      tutorId: parseId(json['tutorId']),
+      tutorName: parseName(json['tutorId']),
+      year: json['year'] is int ? json['year'] : int.tryParse(json['year']?.toString() ?? ''),
+      division: json['division']?.toString(),
+      hodOfDeptId: json['hodOfDeptId']?.toString(),
+      signatureUrl: json['signatureUrl']?.toString(),
+      token: json['token']?.toString(),
+      isApproved: json['isApproved'] == true, // Handles both bool and null
+      delegatedToId: parseId(json['delegatedTo']),
+      delegatedToName: parseName(json['delegatedTo']),
     );
   }
 
