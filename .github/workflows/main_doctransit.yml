@@ -9,11 +9,9 @@ on:
       - 'flutter_app/**'
       - '.github/workflows/main_doctransit.yml'
 
-# Force Node 24 to suppress deprecation warnings
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-# EXPLICIT PERMISSIONS: Required for the deployment to succeed
 permissions:
   contents: write
 
@@ -29,9 +27,15 @@ jobs:
         with:
           flutter-version: '3.27.1'
           channel: 'stable'
+          cache: true
 
       - name: Install Dependencies
         run: flutter pub get
+        working-directory: flutter_app
+
+      - name: Run Code Generation
+        # THIS STEP IS MANDATORY for Freezed/Riverpod projects
+        run: flutter pub run build_runner build --delete-conflicting-outputs
         working-directory: flutter_app
 
       - name: Build Web
