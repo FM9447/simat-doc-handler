@@ -7,14 +7,19 @@ class AppConstants {
 
   static String get baseUrl => _currentBaseUrl;
 
-  /// Probes for local server on startup, falls back to Render if not found.
+  /// Probes for local server on startup (Debug only), defaults to Cloud.
   static Future<void> init() async {
+    if (!kDebugMode) {
+      debugPrint('🚀 Production Mode: Using Cloud API: $_currentBaseUrl');
+      return;
+    }
+
     const localPort = '80';
     final localUrl = kIsWeb ? 'http://localhost:$localPort/api' : 'http://10.0.2.2:$localPort/api';
     const wifiIp = '192.168.1.39';
     const wifiUrl = 'http://$wifiIp:$localPort/api';
 
-    debugPrint('🔍 Probing for Local Backend...');
+    debugPrint('🔍 Debug Mode: Probing for Local Backend...');
 
     try {
       // 1. Try WiFi IP first (Priority for local testing on physical device)
