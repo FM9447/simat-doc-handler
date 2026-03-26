@@ -8,15 +8,21 @@ import '../constants/app_constants.dart';
 import 'dart:convert';
 
 class NotificationService {
-  static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  static FirebaseMessaging get _fcm => FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   static const _storage = FlutterSecureStorage();
 
   /// Initialize FCM — wrapped in try/catch so a Firebase failure never crashes the app.
   static Future<void> init() async {
+    // 0. Platform Guard for Web without Firebase config
+    if (kIsWeb) {
+      debugPrint('⚠️ [FCM] Skipping init on Web (Requires manual Firebase configuration).');
+      return;
+    }
+
     if (Firebase.apps.isEmpty) {
-      debugPrint('⚠️ [FCM] Skipping init: No Firebase app found (expected on Web if not configured).');
+      debugPrint('⚠️ [FCM] Skipping init: No Firebase app found.');
       return;
     }
     try {

@@ -15,7 +15,11 @@ Future<void> main() async {
 
   // Firebase init — wrapped so it never crashes the app
   try {
-    await Firebase.initializeApp();
+    if (kIsWeb) {
+      debugPrint('ℹ️ [Firebase] Skipping initialization on Web platform.');
+    } else {
+      await Firebase.initializeApp();
+    }
   } catch (e) {
     debugPrint('⚠️ Firebase init failed (non-fatal): $e');
   }

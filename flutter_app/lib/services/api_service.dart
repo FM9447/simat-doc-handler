@@ -12,10 +12,10 @@ class ApiService {
   /// Typically used to log the user out and clear session data.
   void Function()? onUnauthorized;
 
-  Future<Map<String, String>> _getHeaders() async {
+  Future<Map<String, String>> _getHeaders({bool includeContentType = false}) async {
     final token = await _storage.read(key: AppConstants.tokenKey);
     return {
-      'Content-Type': 'application/json',
+      if (includeContentType) 'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -23,7 +23,7 @@ class ApiService {
   Future<dynamic> post(String endpoint, Map<String, dynamic> body) async {
     final response = await http.post(
       Uri.parse('${AppConstants.baseUrl}$endpoint'),
-      headers: await _getHeaders(),
+      headers: await _getHeaders(includeContentType: true),
       body: jsonEncode(body),
     );
     return _handleResponse(response);
@@ -32,7 +32,7 @@ class ApiService {
   Future<dynamic> get(String endpoint) async {
     final response = await http.get(
       Uri.parse('${AppConstants.baseUrl}$endpoint'),
-      headers: await _getHeaders(),
+      headers: await _getHeaders(includeContentType: false),
     );
     return _handleResponse(response);
   }
@@ -40,7 +40,7 @@ class ApiService {
   Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
     final response = await http.put(
       Uri.parse('${AppConstants.baseUrl}$endpoint'),
-      headers: await _getHeaders(),
+      headers: await _getHeaders(includeContentType: true),
       body: jsonEncode(body),
     );
     return _handleResponse(response);
@@ -49,7 +49,7 @@ class ApiService {
   Future<dynamic> delete(String endpoint) async {
     final response = await http.delete(
       Uri.parse('${AppConstants.baseUrl}$endpoint'),
-      headers: await _getHeaders(),
+      headers: await _getHeaders(includeContentType: false),
     );
     return _handleResponse(response);
   }
@@ -61,7 +61,7 @@ class ApiService {
       String? fileName}) async {
     var request = http.MultipartRequest(
         'POST', Uri.parse('${AppConstants.baseUrl}$endpoint'));
-    request.headers.addAll(await _getHeaders());
+    request.headers.addAll(await _getHeaders(includeContentType: false));
 
     fields.forEach((key, value) {
       request.fields[key] = value;
