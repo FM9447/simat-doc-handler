@@ -9,15 +9,22 @@ on:
       - 'flutter_app/**'
       - '.github/workflows/main_doctransit.yml'
 
+# Force Node 24 to suppress deprecation warnings
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Permissions required for official GitHub Pages deployment
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,7 +32,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.0' # Upgraded to satisfy syncfusion requirements
+          flutter-version: '3.41.0'
           channel: 'stable'
           cache: true
 
@@ -38,15 +45,19 @@ jobs:
         working-directory: flutter_app
 
       - name: Build Web
-        run: flutter build web --release
+        # Added --base-href / to ensure correct routing at root domain
+        run: flutter build web --release --base-href /
         working-directory: flutter_app
 
       - name: Add CNAME
         run: echo "doctransit.live" > build/web/CNAME
         working-directory: flutter_app
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./flutter_app/build/web
+          path: ./flutter_app/build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
