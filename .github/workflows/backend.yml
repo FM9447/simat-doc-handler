@@ -70,4 +70,4 @@ jobs:
           app-name: 'docTransit'
           slot-name: 'Production'
           package: backend
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CA847433E547417C8616273D2511E833 || secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE || secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CA847433E547417C8616273D2511E833 }}
