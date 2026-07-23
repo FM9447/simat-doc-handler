@@ -9,6 +9,7 @@ import '../../../approvals/presentation/screens/approval_queue_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../admin/presentation/screens/user_management_screen.dart';
 import '../../../admin/presentation/screens/document_flow_screen.dart';
+import '../../../admin/presentation/screens/duty_category_management_screen.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -31,6 +32,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       navItems = [
         (icon: Icons.people_outline, selectedIcon: Icons.people_rounded, label: 'Users', screen: const UserManagementScreen()),
         (icon: Icons.pending_actions_outlined, selectedIcon: Icons.pending_actions_rounded, label: 'Pending', screen: const UserManagementScreen(showPendingOnly: true)),
+        (icon: Icons.assignment_ind_outlined, selectedIcon: Icons.assignment_ind_rounded, label: 'Clubs & Duty', screen: const DutyCategoryManagementScreen()),
         (icon: Icons.account_tree_outlined, selectedIcon: Icons.account_tree_rounded, label: 'Flows', screen: const DocumentFlowScreen()),
         (icon: Icons.person_outline, selectedIcon: Icons.person_rounded, label: 'Profile', screen: const ProfileScreen()),
       ];

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/admin_provider.dart';
+import '../../../../providers/duty_category_provider.dart';
 import '../../../../models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -12,6 +13,7 @@ import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/loading_logo.dart';
 import '../../../../shared/widgets/branded_title.dart';
 import 'department_management_screen.dart';
+import 'duty_category_management_screen.dart';
 
 class UserManagementScreen extends ConsumerStatefulWidget {
   final bool showPendingOnly;
@@ -34,6 +36,11 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         title: const BrandedTitle(),
         actions: [
           const NotificationBell(),
+          IconButton(
+            icon: const Icon(Icons.assignment_ind_outlined, color: AppColors.secondary),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DutyCategoryManagementScreen())),
+            tooltip: 'Clubs & Duty Categories (IEEE, IEDC, NSS, etc.)',
+          ),
           IconButton(
             icon: const Icon(Icons.business_outlined, color: AppColors.primary),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentManagementScreen())),
@@ -65,111 +72,144 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
           backgroundColor: AppColors.card,
           onRefresh: () => ref.read(adminUserProvider.notifier).getUsers(),
           child: usersAsync.when(
-          data: (users) {
-            final filtered = users
-                .where((u) =>
-                    (u.name.toLowerCase().contains(_searchQuery) || u.email.toLowerCase().contains(_searchQuery)) &&
-                    (!widget.showPendingOnly || !u.isApproved))
-                .toList();
+            data: (users) {
+              final filtered = users
+                  .where((u) =>
+                      (u.name.toLowerCase().contains(_searchQuery) || u.email.toLowerCase().contains(_searchQuery)) &&
+                      (!widget.showPendingOnly || !u.isApproved))
+                  .toList();
 
-            if (filtered.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.people_outline_rounded, size: 64, color: AppColors.hint),
-                    const SizedBox(height: 16),
-                    Text(widget.showPendingOnly ? 'No pending approvals' : 'No users found',
-                        style: AppTypography.headingSmall),
-                  ],
-                ),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final user = filtered[index];
-                final roleC = AppColors.roleColor(user.role);
-
-                return GlassCard(
-                  padding: EdgeInsets.zero,
-                  onTap: () => _showEditDialog(context, user),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(
-                        color: roleC.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: roleC.withOpacity(0.3)),
-                      ),
-                      child: Icon(
-                        user.role == 'student' ? Icons.school_rounded : Icons.person_rounded,
-                        color: roleC, size: 20,
-                      ),
-                    ),
-                    title: Text(user.name, style: AppTypography.headingSmall.copyWith(fontSize: 15)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 2),
-                        Text(user.email, style: AppTypography.caption),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            _roleChip(user.role),
-                            if (!['office', 'principal', 'admin'].contains(user.role.toLowerCase())) ...[
-                              const SizedBox(width: 8),
-                              if (user.dept != null)
-                                Text(user.dept!, style: AppTypography.caption.copyWith(fontSize: 11)),
-                              if (user.role == 'student' && user.year != null) ...[
-                                const SizedBox(width: 6),
-                                Text('Y${user.year}${user.division ?? ''}',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                              ],
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (user.isApproved && !['admin', 'principal', 'student'].contains(user.role.toLowerCase()))
-                          IconButton(
-                            icon: const Icon(Icons.star_outline_rounded, color: AppColors.secondary, size: 20),
-                            onPressed: () => _showPrincipalDialog(context, user),
-                            tooltip: 'Set as Principal',
-                          ),
-                        !user.isApproved
-                            ? StatusBadge(status: 'pending')
-                            : const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
-                      ],
-                    ),
+              if (filtered.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.people_outline_rounded, size: 64, color: AppColors.hint),
+                      const SizedBox(height: 16),
+                      Text(widget.showPendingOnly ? 'No pending approvals' : 'No users found',
+                          style: AppTypography.headingSmall),
+                    ],
                   ),
                 );
-              },
-            );
-          },
-          loading: () => const SingleChildScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            child: SizedBox(
-              height: 400,
-              child: Center(child: LoadingLogo(size: 80)),
+              }
+
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: filtered.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final user = filtered[index];
+                  final roleC = AppColors.roleColor(user.role);
+
+                  return GlassCard(
+                    padding: EdgeInsets.zero,
+                    onTap: () => _showEditDialog(context, user),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      leading: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: roleC.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: roleC.withOpacity(0.3)),
+                        ),
+                        child: Icon(
+                          user.role == 'student' ? Icons.school_rounded : Icons.person_rounded,
+                          color: roleC,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(user.name, style: AppTypography.headingSmall.copyWith(fontSize: 15)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 2),
+                          Text(user.email, style: AppTypography.caption),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _roleChip(user.role),
+                              if (!['office', 'principal', 'admin'].contains(user.role.toLowerCase())) ...[
+                                const SizedBox(width: 8),
+                                if (user.dept != null)
+                                  Text(user.dept!, style: AppTypography.caption.copyWith(fontSize: 11)),
+                                if (user.role == 'student' && user.year != null) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Y${user.year}${user.division ?? ''}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (user.isApproved && ['tutor', 'hod', 'office'].contains(user.role.toLowerCase()))
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InkWell(
+                                onTap: () => _showPrincipalDialog(context, user),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.stars_rounded, color: AppColors.primary, size: 14),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Make Principal',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          !user.isApproved
+                              ? StatusBadge(status: 'pending')
+                              : const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: 400,
+                child: Center(child: LoadingLogo(size: 80)),
+              ),
             ),
-          ),
-          error: (e, _) => SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: SizedBox(
-              height: 400,
-              child: Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.rejected))),
+            error: (e, _) => SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: 400,
+                child: Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.rejected))),
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -179,7 +219,8 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(6),
+        color: c.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: c.withOpacity(0.3)),
       ),
       child: Text(role.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: c)),
@@ -187,40 +228,65 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   }
 
   void _showEditDialog(BuildContext ctx, UserModel user) {
-    String  selectedRole = user.role.toLowerCase();
+    String selectedRole = user.role.toLowerCase();
     String? selectedDeptId = user.departmentId;
-    int?    selectedYear = user.year;
+    int? selectedYear = user.year;
     String? selectedDivision = user.division;
-    bool    isApproved = user.isApproved;
+    bool isApproved = user.isApproved;
 
     showDialog(
       context: ctx,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setS) {
           final depts = ref.watch(adminDepartmentProvider).valueOrNull ?? [];
+          final categories = ref.watch(dutyCategoryNotifierProvider).valueOrNull ?? [];
+          final assignedCategories = categories.where((c) {
+            final fId = c.facultyInCharge?['_id'] ?? c.facultyInCharge?['id'];
+            return fId == user.id;
+          }).toList();
+
           return AlertDialog(
             backgroundColor: AppColors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
-            title: Text('Edit ${user.name}', style: AppTypography.headingSmall),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            title: Row(
+              children: [
+                Expanded(child: Text('Edit ${user.name}', style: AppTypography.headingSmall)),
+                if (user.role.toLowerCase() != 'principal')
+                  IconButton(
+                    icon: const Icon(Icons.stars_rounded, color: AppColors.primary),
+                    tooltip: 'Promote to Principal',
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showPrincipalDialog(context, user);
+                    },
+                  ),
+              ],
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: selectedRole,
+                    value: selectedRole,
                     decoration: const InputDecoration(labelText: 'Role'),
                     dropdownColor: AppColors.card,
                     style: const TextStyle(color: AppColors.foreground, fontSize: 14),
-                    items: (selectedRole == 'principal' || selectedRole == 'admin' 
-                        ? ['student', 'tutor', 'hod', 'principal', 'office', 'admin'] 
-                        : ['student', 'tutor', 'hod', 'office'])
-                        .map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))).toList(),
+                    items: ['student', 'tutor', 'hod', 'principal', 'office', 'admin']
+                        .map((r) => DropdownMenuItem(
+                              value: r,
+                              child: Text(r == 'principal' ? 'PRINCIPAL (HEAD OF INST.)' : r.toUpperCase()),
+                            ))
+                        .toList(),
                     onChanged: (v) => setS(() => selectedRole = v!),
                   ),
                   if (!['office', 'principal', 'admin'].contains(selectedRole)) ...[
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(
-                      initialValue: selectedDeptId,
+                      value: selectedDeptId,
                       decoration: const InputDecoration(labelText: 'Department'),
                       dropdownColor: AppColors.card,
                       hint: const Text('Select Department', style: TextStyle(color: AppColors.muted, fontSize: 13)),
@@ -231,7 +297,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   if (selectedRole == 'student') ...[
                     const SizedBox(height: 14),
                     DropdownButtonFormField<int>(
-                      initialValue: selectedYear,
+                      value: selectedYear,
                       decoration: const InputDecoration(labelText: 'Year'),
                       dropdownColor: AppColors.card,
                       items: [1, 2, 3, 4].map((y) => DropdownMenuItem(value: y, child: Text('Year $y'))).toList(),
@@ -248,7 +314,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                     if (selectedDivision != null) ...[
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        initialValue: selectedDivision,
+                        value: selectedDivision,
                         decoration: const InputDecoration(labelText: 'Division'),
                         dropdownColor: AppColors.card,
                         items: ['A', 'B'].map((d) => DropdownMenuItem(value: d, child: Text('Div $d'))).toList(),
@@ -256,6 +322,34 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                       ),
                     ],
                   ],
+
+                  // Staff Club / Organization Assignment section
+                  if (selectedRole != 'student') ...[
+                    const SizedBox(height: 16),
+                    const Divider(color: AppColors.border),
+                    const SizedBox(height: 8),
+                    Text('Club / Organization In-Charge', style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(
+                      assignedCategories.isNotEmpty
+                          ? 'Currently In-Charge of: ${assignedCategories.map((c) => c.name).join(', ')}'
+                          : 'Not assigned to any Club or Organization',
+                      style: AppTypography.caption,
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DutyCategoryManagementScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_note_rounded, size: 18),
+                      label: const Text('Manage & Assign Clubs', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+
                   const SizedBox(height: 14),
                   SwitchListTile(
                     title: Text('Account Approved', style: AppTypography.bodyMedium),
@@ -276,16 +370,13 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
 
                   if (isStaff) {
                     final allUsers = ref.read(adminUserProvider).value ?? [];
-                    // Find eligible candidates (same role, approved, not this user)
-                    final candidates = allUsers.where((u) => 
-                      u.id != user.id && 
-                      u.role == user.role && 
-                      u.isApproved
-                    ).toList();
+                    final candidates = allUsers.where((u) => u.id != user.id && u.role == user.role && u.isApproved).toList();
 
                     if (candidates.isEmpty) {
                       ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(content: Text('Cannot delete this ${user.role.toUpperCase()} yet. Please ensure there is another approved ${user.role.toUpperCase()} to take over their duties first.')),
+                        SnackBar(
+                            content: Text(
+                                'Cannot delete this ${user.role.toUpperCase()} yet. Please ensure there is another approved ${user.role.toUpperCase()} to take over their duties first.')),
                       );
                       return;
                     }
@@ -299,7 +390,8 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Deleting ${user.name} (${user.role.toUpperCase()}) requires reassigning their pending requests and students.', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                            Text('Deleting ${user.name} (${user.role.toUpperCase()}) requires reassigning their pending requests and students.',
+                                style: const TextStyle(color: AppColors.muted, fontSize: 13)),
                             const SizedBox(height: 16),
                             const Text('Select Replacement staff:', style: TextStyle(color: AppColors.muted, fontSize: 12)),
                             const SizedBox(height: 8),
@@ -316,13 +408,14 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                         ),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-                          GradientButton(text: 'Reassign & Delete', 
+                          GradientButton(
+                              text: 'Reassign & Delete',
                               onPressed: () => Navigator.pop(c, reassignedToId),
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
                         ],
                       ),
                     );
-                    
+
                     if (reassignedToId == null) return;
                   } else {
                     final confirm = await showDialog<bool>(
@@ -333,7 +426,9 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                         content: const Text('This action cannot be undone.', style: TextStyle(color: AppColors.muted)),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-                          GradientButton(text: 'Delete', outline: true,
+                          GradientButton(
+                              text: 'Delete',
+                              outline: true,
                               onPressed: () => Navigator.pop(c, true),
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
                         ],
@@ -342,41 +437,12 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                     if (confirm != true) return;
                   }
 
-                  // Perform deletion
                   await ref.read(adminUserProvider.notifier).deleteUser(user.id, reassignToId: reassignedToId);
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
                 icon: const Icon(Icons.delete_outline_rounded, color: AppColors.rejected, size: 18),
                 label: const Text('Delete', style: TextStyle(color: AppColors.rejected)),
               ),
-              if ((user.role != 'principal' || !user.isApproved) && user.role != 'student')
-                TextButton.icon(
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: ctx,
-                      builder: (c) => AlertDialog(
-                        backgroundColor: AppColors.card,
-                        title: Text('Set as Principal?', style: AppTypography.headingSmall),
-                        content: Text('This will set ${user.name} as the school principal and de-activate others.', style: const TextStyle(color: AppColors.muted)),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-                          GradientButton(text: 'Establish',
-                              onPressed: () => Navigator.pop(c, true),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await ref.read(adminUserProvider.notifier).updateUser(user.id, {
-                        'role': 'principal',
-                        'isApproved': true,
-                      });
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    }
-                  },
-                  icon: const Icon(Icons.stars_rounded, color: AppColors.primary, size: 18),
-                  label: const Text('Set Principal', style: TextStyle(color: AppColors.primary)),
-                ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -387,8 +453,11 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                     icon: Icons.check_rounded,
                     onPressed: () async {
                       await ref.read(adminUserProvider.notifier).updateUser(user.id, {
-                        'role': selectedRole, 'departmentId': selectedDeptId,
-                        'year': selectedYear, 'division': selectedDivision, 'isApproved': isApproved,
+                        'role': selectedRole,
+                        'departmentId': selectedDeptId,
+                        'year': selectedYear,
+                        'division': selectedDivision,
+                        'isApproved': isApproved,
                       });
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
@@ -410,7 +479,8 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         backgroundColor: AppColors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Set as Principal?', style: AppTypography.headingSmall),
-        content: Text('This will set ${user.name} as the school principal and de-activate others.', style: const TextStyle(color: AppColors.muted)),
+        content: Text('This will set ${user.name} as the school principal and de-activate others.',
+            style: const TextStyle(color: AppColors.muted)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
           GradientButton(
