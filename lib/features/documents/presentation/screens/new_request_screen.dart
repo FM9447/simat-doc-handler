@@ -1,4 +1,6 @@
+import 'dart:io' show File;
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,14 +48,26 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'png'],
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'PDF', 'JPG', 'JPEG', 'PNG'],
+      withData: true,
     );
 
-    if (result != null) {
-      setState(() {
-        _selectedFileBytes = result.files.single.bytes;
-        _selectedFileName = result.files.single.name;
-      });
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.single;
+      Uint8List? bytes = file.bytes;
+      if (bytes == null && !kIsWeb && file.path != null && file.path!.isNotEmpty) {
+        try {
+          bytes = await File(file.path!).readAsBytes();
+        } catch (e) {
+          debugPrint('Error reading document file: $e');
+        }
+      }
+      if (bytes != null) {
+        setState(() {
+          _selectedFileBytes = bytes;
+          _selectedFileName = file.name;
+        });
+      }
     }
   }
 

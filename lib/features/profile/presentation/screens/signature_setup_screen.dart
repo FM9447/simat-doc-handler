@@ -1,3 +1,6 @@
+import 'dart:io' show File;
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
@@ -66,27 +69,38 @@ class _SignatureSetupScreenState extends ConsumerState<SignatureSetupScreen> {
       withData: true,
     );
 
-    if (result != null && result.files.single.bytes != null) {
-      setState(() => _isUploading = true);
-      try {
-        await ref.read(authProvider.notifier).uploadSignature(
-          result.files.single.bytes!,
-          result.files.single.name,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Signature uploaded successfully!')),
-          );
-          Navigator.pop(context);
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.single;
+      Uint8List? bytes = file.bytes;
+      if (bytes == null && !kIsWeb && file.path != null && file.path!.isNotEmpty) {
+        try {
+          bytes = await File(file.path!).readAsBytes();
+        } catch (e) {
+          debugPrint('Error reading signature file: $e');
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Upload failed: $e')),
+      }
+      if (bytes != null) {
+        setState(() => _isUploading = true);
+        try {
+          await ref.read(authProvider.notifier).uploadSignature(
+            bytes,
+            file.name,
           );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Signature uploaded successfully!')),
+            );
+            Navigator.pop(context);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Upload failed: $e')),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _isUploading = false);
         }
-      } finally {
-        if (mounted) setState(() => _isUploading = false);
       }
     }
   }

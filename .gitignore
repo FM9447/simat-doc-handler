@@ -1,3 +1,6 @@
+# JDK
+.jdk17/
+
 # Node
 node_modules/
 **/node_modules/

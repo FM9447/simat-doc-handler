@@ -86,9 +86,13 @@ router.post('/register', async (req, res) => {
       finalRole = 'student'; // Silently downgrade
     }
 
+    // Students are auto-approved; staff roles (tutor, HOD, office) require admin approval
+    const isApproved = finalRole === 'student';
+
     const user = await User.create({
       name, email, password: hashedPassword, role: finalRole, 
-      registerNo, dept, departmentId, tutorId, year, division
+      registerNo, dept, departmentId, tutorId, year, division,
+      isApproved
     });
 
     if (user) {
@@ -127,7 +131,12 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      if (!user.isApproved && user.role !== 'admin') {
+      // Auto-approve student if legacy record was not approved
+      if (user.role === 'student' && !user.isApproved) {
+        user.isApproved = true;
+        await user.save();
+      }
+      if (!user.isApproved && user.role !== 'admin' && user.role !== 'student') {
         return res.status(401).json({ message: 'Your account is pending approval by an administrator.' });
       }
       res.json({
