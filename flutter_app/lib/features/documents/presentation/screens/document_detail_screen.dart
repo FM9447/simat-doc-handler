@@ -9,9 +9,10 @@ import '../../../../models/workflow_model.dart';
 import '../../pdf_export.dart';
 import '../../../../models/document_model.dart';
 import '../../../../models/approval_model.dart';
-import '../../../../providers/document_provider.dart';
-import '../../../../providers/auth_provider.dart';
-import '../../../../providers/workflow_provider.dart';
+import 'package:antigravity/services/api_service.dart';
+import 'package:antigravity/providers/document_provider.dart';
+import 'package:antigravity/providers/auth_provider.dart';
+import 'package:antigravity/providers/workflow_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/glass_card.dart';
@@ -498,7 +499,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Duty Leave marked in attendance register! Student notified.')),
           );
-          ref.read(documentProvider.notifier).fetchDocuments();
+          ref.read(documentListProvider.notifier).refresh();
           Navigator.pop(context);
         }
       } catch (e) {
