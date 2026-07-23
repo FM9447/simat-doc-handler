@@ -189,7 +189,7 @@ class _DutyCategoryManagementScreenState extends ConsumerState<DutyCategoryManag
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.primary.withOpacity(0.3)),
                         ),
-                        child: const Icon(Icons.star_purple_500_rounded, color: AppColors.primary, size: 22),
+                        child: const Icon(Icons.stars_rounded, color: AppColors.primary, size: 22),
                       ),
                       title: Text(cat.name, style: AppTypography.headingSmall.copyWith(fontSize: 16)),
                       subtitle: Column(
