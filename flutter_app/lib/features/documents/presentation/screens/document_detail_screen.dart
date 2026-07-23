@@ -183,8 +183,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
     final isLastStep = nextIdx == widget.document.workflow.length - 1;
     final isTutorOrAdmin = user?.role == 'tutor' || user?.role == 'admin';
     final hasDutyLeaveBeenMarked = widget.document.status == DocumentStatus.finalApproved ||
-        widget.document.approvals.any((a) =>
-            (a.comment ?? '').contains('Duty Leave Marked') || (a.comment ?? '').contains('attendance register'));
+        widget.document.approvals.any((a) => (a.comment ?? '').contains('Duty Leave Marked'));
 
     return Scaffold(
       backgroundColor: AppColors.background,

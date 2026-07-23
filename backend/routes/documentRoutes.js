@@ -257,7 +257,7 @@ router.post('/:id/mark-duty-leave', protect, async (req, res) => {
       approverId: req.user.id,
       role: req.user.role,
       action: 'approved',
-      comment: `Duty Leave Marked in Attendance Register. ${comment || ''}`,
+      comment: `Duty Leave Marked. ${comment || ''}`.trim(),
       signatureUrl: signatureUrl,
     });
 
@@ -266,7 +266,7 @@ router.post('/:id/mark-duty-leave', protect, async (req, res) => {
 
     await NotificationService.send(
       document.studentId,
-      `🎉 Great news! Your Duty Leave for "${document.title}" has been marked in official college attendance registers by your tutor ${req.user.name}.`,
+      `🎉 Great news! Your Duty Leave for "${document.title}" has been marked by your tutor ${req.user.name}.`,
       'ok'
     );
 

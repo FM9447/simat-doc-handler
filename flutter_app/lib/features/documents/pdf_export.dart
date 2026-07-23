@@ -446,7 +446,7 @@ class PdfExportHelper {
             // (it's a marking action, not an approval signature)
             final sigApprovals = document.approvals.asMap().entries.where((entry) {
               final comment = entry.value.comment ?? '';
-              return !comment.contains('Duty Leave Marked') && !comment.contains('attendance register');
+              return !comment.contains('Duty Leave Marked');
             }).toList();
 
             if (sigApprovals.isNotEmpty) {
