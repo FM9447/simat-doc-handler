@@ -240,7 +240,7 @@ router.post('/:id/approve', protect, upload.single('signature'), async (req, res
 // @access  Private (Tutor/Admin only)
 router.post('/:id/mark-duty-leave', protect, async (req, res) => {
   try {
-    const { comment } = req.body;
+    const { comment, signatureUrl: bodySig } = req.body;
     const document = await Document.findById(req.params.id);
 
     if (!document) {
@@ -251,11 +251,14 @@ router.post('/:id/mark-duty-leave', protect, async (req, res) => {
       return res.status(403).json({ message: 'Only tutors or admins can mark Duty Leave' });
     }
 
+    const signatureUrl = bodySig || req.user.signatureUrl || null;
+
     document.approvals.push({
       approverId: req.user.id,
       role: req.user.role,
       action: 'approved',
       comment: `Duty Leave Marked in Attendance Register. ${comment || ''}`,
+      signatureUrl: signatureUrl,
     });
 
     document.status = 'final_approved';

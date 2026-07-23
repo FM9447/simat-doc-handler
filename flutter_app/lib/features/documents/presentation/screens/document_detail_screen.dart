@@ -382,48 +382,25 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: GradientButton(
-                            text: 'Approve & Sign',
-                            icon: Icons.check_circle_outline_rounded,
-                            onPressed: () => setState(() => _isSigning = true),
+                            text: (isDutyLeaveDoc && isLastStep && isTutorOrAdmin)
+                                ? 'Duty Leave Marked'
+                                : 'Approve & Sign',
+                            icon: (isDutyLeaveDoc && isLastStep && isTutorOrAdmin)
+                                ? Icons.playlist_add_check_circle_rounded
+                                : Icons.check_circle_outline_rounded,
+                            onPressed: () {
+                              if (isDutyLeaveDoc && isLastStep && isTutorOrAdmin) {
+                                _markDutyLeave();
+                              } else {
+                                setState(() => _isSigning = true);
+                              }
+                            },
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
                       ],
                     ),
-              if (isDutyLeaveDoc && isTutorOrAdmin && hasDutyLeaveBeenMarked) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.approved.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.approved.withOpacity(0.4)),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle_rounded, color: AppColors.approved, size: 18),
-                      SizedBox(width: 8),
-                      Text(
-                        'Duty Leave Marked',
-                        style: TextStyle(color: AppColors.approved, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              if (isCurrentApprover && !_isSigning) ...[
-                if (isDutyLeaveDoc && isTutorOrAdmin && isLastStep && !hasDutyLeaveBeenMarked) ...[
-                  const SizedBox(height: 12),
-                  GradientButton(
-                    text: 'Mark Duty Leave in Register',
-                    icon: Icons.playlist_add_check_circle_rounded,
-                    onPressed: _markDutyLeave,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ],
+              if (!_isSigning) ...[
                 const SizedBox(height: 12),
                 GradientButton(
                   text: 'Transfer/Delegate Request',
@@ -434,6 +411,31 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ],
+              const SizedBox(height: 40),
+            ],
+
+            if (isDutyLeaveDoc && isTutorOrAdmin && hasDutyLeaveBeenMarked && !isCurrentApprover) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.approved.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.approved.withOpacity(0.4)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: AppColors.approved, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Duty Leave Marked',
+                      style: TextStyle(color: AppColors.approved, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 40),
             ],
           ],
