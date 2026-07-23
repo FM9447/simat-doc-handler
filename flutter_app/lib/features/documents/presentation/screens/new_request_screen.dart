@@ -8,6 +8,7 @@ import 'package:confetti/confetti.dart';
 import '../../../../providers/document_provider.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../providers/workflow_provider.dart';
+import '../../../../providers/duty_category_provider.dart';
 import '../../../../models/workflow_model.dart';
 import '../../../../models/workflow_element.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -403,8 +404,21 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
           validator: el.required ? (v) => v!.isEmpty ? 'Required' : null : null,
         );
       case 'select':
+        List<String> optionsToUse = el.options;
+        if (label.toLowerCase().contains('duty category') || label.toLowerCase().contains('club')) {
+          final dbCats = ref.watch(dutyCategoryNotifierProvider).maybeWhen(
+            data: (cats) => cats.where((c) => c.isActive).map((c) => c.name).toList(),
+            orElse: () => <String>[],
+          );
+          if (dbCats.isNotEmpty) {
+            optionsToUse = dbCats;
+          }
+        }
+        final currentValue = _fieldValues[label] as String?;
+        final validInitialValue = (currentValue != null && optionsToUse.contains(currentValue)) ? currentValue : null;
+
         return DropdownButtonFormField<String>(
-          initialValue: _fieldValues[label] as String?,
+          value: validInitialValue,
           decoration: InputDecoration(
             labelText: '$label${el.required ? ' *' : ''}',
             hintText: el.placeholder.isNotEmpty ? el.placeholder : null,
@@ -413,7 +427,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
           ),
           dropdownColor: AppColors.card,
           style: const TextStyle(color: AppColors.foreground, fontSize: 14),
-          items: el.options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+          items: optionsToUse.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
           onChanged: (v) => setState(() => _fieldValues[label] = v),
           validator: el.required ? (v) => v == null ? 'Required' : null : null,
         );

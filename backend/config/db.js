@@ -1,5 +1,32 @@
 const mongoose = require('mongoose');
 const DocumentType = require('../models/DocumentType');
+const DutyCategory = require('../models/DutyCategory');
+
+const seedDefaultDutyCategories = async () => {
+  try {
+    const defaultCategories = [
+      { name: 'IEDC (Innovation & Entrepreneurship Cell)', code: 'iedc', description: 'Nodal Officer managed activities' },
+      { name: 'NSS (National Service Scheme)', code: 'nss', description: 'NSS Officer managed activities' },
+      { name: 'MuLearn Campus Chapter', code: 'mulearn', description: 'MuLearn Lead managed activities' },
+      { name: 'IEEE Student Branch', code: 'ieee', description: 'IEEE Counselor managed activities' },
+      { name: 'College Sports Team', code: 'sports', description: 'Physical Education / Sports managed activities' },
+      { name: 'Arts & Cultural Event', code: 'arts', description: 'Arts Convener managed activities' },
+      { name: 'Department Technical Fest', code: 'dept_fest', description: 'Department Fest managed activities' },
+      { name: 'Other Official Representation', code: 'other', description: 'General college representation' }
+    ];
+
+    for (const cat of defaultCategories) {
+      await DutyCategory.findOneAndUpdate(
+        { code: cat.code },
+        { ...cat, isActive: true },
+        { upsert: true, new: true }
+      );
+    }
+    console.log('✅ Auto-seeded Duty Categories into MongoDB');
+  } catch (err) {
+    console.error('DutyCategory seed error:', err.message);
+  }
+};
 
 const seedInitialFlows = async () => {
   try {
@@ -233,6 +260,7 @@ const connectDB = async () => {
     const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smartcampus';
     const conn = await mongoose.connect(dbUri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    await seedDefaultDutyCategories();
     await seedInitialFlows();
   } catch (error) {
     console.error(`Error: ${error.message}`);
