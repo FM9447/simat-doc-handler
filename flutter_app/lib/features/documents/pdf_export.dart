@@ -84,6 +84,11 @@ class PdfExportHelper {
       ...(document.formData?.map((k, v) => MapEntry(k.replaceAll(' ', '_'), v?.toString() ?? '')) ?? {}),
     };
 
+    pw.ImageProvider? defaultHeaderImage;
+    try {
+      defaultHeaderImage = await imageFromAssetBundle('assets/images/simat_header.png');
+    } catch (_) {}
+
     // Capture non-nullable local reference for use in closures
     final wf = workflow;
 
@@ -92,10 +97,14 @@ class PdfExportHelper {
     final bool showLetterhead = wf == null || wf.includeLetterhead;
     if (showLetterhead) {
       final headerImageUrl = wf?.customHeaderUrl;
-      final headerImage = headerImageUrl != null ? remoteImages[headerImageUrl] : null;
+      final headerImage = (headerImageUrl != null && remoteImages[headerImageUrl] != null)
+          ? remoteImages[headerImageUrl]
+          : defaultHeaderImage;
+
       if (headerImage != null) {
         letterheadWidget = pw.Container(
-          height: 130, // constrain height to prevent large banner images from breaking layout
+          height: 120,
+          margin: const pw.EdgeInsets.only(top: 15, left: 15, right: 15, bottom: 10),
           alignment: pw.Alignment.topCenter,
           child: pw.Image(headerImage, width: PdfPageFormat.a4.width, fit: pw.BoxFit.contain),
         );
@@ -106,9 +115,9 @@ class PdfExportHelper {
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               pw.SizedBox(height: 4),
-              pw.Text('SIMAT SMART CAMPUS - DOCTRANSIT', style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
-              pw.Text('VANIAMKULAM, PALAKKAD · Affiliated to APJ AKU', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
-              pw.Text('Email: info@simat.edu · Phone: +91-466-2228900 · www.simat.edu', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey500)),
+              pw.Text('SREEPATHY INSTITUTE OF MANAGEMENT AND TECHNOLOGY', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              pw.Text('Affiliated to APJ Abdul Kalam Technological University (KTU)', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+              pw.Text('Pattambi, Palakkad - 679 533 · Email: principal@simat.ac.in · www.simat.ac.in', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
               pw.Padding(
                 padding: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 8),
                 child: pw.Divider(thickness: 1.2, color: PdfColors.grey300),
