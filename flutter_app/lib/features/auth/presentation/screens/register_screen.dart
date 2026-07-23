@@ -2,6 +2,7 @@ import 'dart:io' show File;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../../providers/auth_provider.dart';
@@ -99,6 +100,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
+    TextInput.finishAutofillContext();
     final userData = {
       'name': _nameCtrl.text.trim(),
       'email': _emailCtrl.text.trim(),
@@ -171,47 +173,51 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                Form(
-                  key: _formKey,
-                  child: GlassCard(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Name
-                        TextFormField(
-                          controller: _nameCtrl,
-                          style: const TextStyle(color: AppColors.foreground),
-                          decoration: _field('Full Name', Icons.person_outline_rounded),
-                          validator: (v) => v!.isEmpty ? 'Required' : null,
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Email
-                        TextFormField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(color: AppColors.foreground),
-                          decoration: _field('Email Address', Icons.email_outlined),
-                          validator: (v) => v!.isEmpty ? 'Required' : null,
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Password
-                        TextFormField(
-                          controller: _passwordCtrl,
-                          obscureText: _obscurePassword,
-                          style: const TextStyle(color: AppColors.foreground),
-                          decoration: _field('Password', Icons.lock_outline_rounded).copyWith(
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                  size: 20, color: AppColors.muted),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                            ),
+                AutofillGroup(
+                  child: Form(
+                    key: _formKey,
+                    child: GlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Name
+                          TextFormField(
+                            controller: _nameCtrl,
+                            autofillHints: const [AutofillHints.name],
+                            style: const TextStyle(color: AppColors.foreground),
+                            decoration: _field('Full Name', Icons.person_outline_rounded),
+                            validator: (v) => v!.isEmpty ? 'Required' : null,
                           ),
-                          validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
-                        ),
-                        const SizedBox(height: 14),
+                          const SizedBox(height: 14),
+
+                          // Email
+                          TextFormField(
+                            controller: _emailCtrl,
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [AutofillHints.username, AutofillHints.email],
+                            style: const TextStyle(color: AppColors.foreground),
+                            decoration: _field('Email Address', Icons.email_outlined),
+                            validator: (v) => v!.isEmpty ? 'Required' : null,
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Password
+                          TextFormField(
+                            controller: _passwordCtrl,
+                            obscureText: _obscurePassword,
+                            autofillHints: const [AutofillHints.newPassword],
+                            style: const TextStyle(color: AppColors.foreground),
+                            decoration: _field('Password', Icons.lock_outline_rounded).copyWith(
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    size: 20, color: AppColors.muted),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                            ),
+                            validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
+                          ),
+                          const SizedBox(height: 14),
 
                         // Role
                         DropdownButtonFormField<String>(

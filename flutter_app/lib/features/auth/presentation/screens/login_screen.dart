@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../core/utils/dialog_utils.dart';
@@ -46,6 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+    TextInput.finishAutofillContext();
     await ref.read(authProvider.notifier).login(
       _emailCtrl.text.trim(),
       _passwordCtrl.text.trim(),
@@ -79,79 +81,80 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
               child: FadeTransition(
                 opacity: _fadeAnim,
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Branding
-                      Column(
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Pulsing Glow
-                              Container(
-                                height: 60, width: 60,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.glow.withOpacity(0.5), 
-                                      blurRadius: 32, 
-                                      spreadRadius: 8
-                                    )
-                                  ],
+                child: AutofillGroup(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Branding
+                        Column(
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Pulsing Glow
+                                Container(
+                                  height: 60, width: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.glow.withOpacity(0.5), 
+                                        blurRadius: 32, 
+                                        spreadRadius: 8
+                                      )
+                                    ],
+                                  ),
                                 ),
+                                Image.asset(
+                                  'assets/images/logo.png',
+                                  height: 100, width: 100,
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.description_rounded, size: 48, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            ShaderMask(
+                              shaderCallback: (r) => AppColors.primaryGradient.createShader(r),
+                              child: const Text(
+                                'DocTransit',
+                                style: TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -1.5,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              Image.asset(
-                                'assets/images/logo.png',
-                                height: 100, width: 100,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.description_rounded, size: 48, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          ShaderMask(
-                            shaderCallback: (r) => AppColors.primaryGradient.createShader(r),
-                            child: const Text(
-                              'DocTransit',
-                              style: TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: -1.5,
-                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'SIMAT Secure Paperless Approvals',
+                              style: AppTypography.bodyMuted.copyWith(fontSize: 13),
                               textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'SIMAT Secure Paperless Approvals',
-                            style: AppTypography.bodyMuted.copyWith(fontSize: 13),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 52),
+                          ],
+                        ),
+                        const SizedBox(height: 52),
 
-                      // Login Card
-                      GlassCard(
-                        padding: const EdgeInsets.all(28),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Sign In', style: AppTypography.headingMedium),
-                            const SizedBox(height: 6),
-                            Text('Welcome back! Enter your credentials.', style: AppTypography.bodyMuted),
-                            const SizedBox(height: 28),
+                        // Login Card
+                        GlassCard(
+                          padding: const EdgeInsets.all(28),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Sign In', style: AppTypography.headingMedium),
+                              const SizedBox(height: 6),
+                              Text('Welcome back! Enter your credentials.', style: AppTypography.bodyMuted),
+                              const SizedBox(height: 28),
 
-                            // Email
-                            TextFormField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              autofillHints: const [AutofillHints.email],
+                              // Email
+                              TextFormField(
+                                controller: _emailCtrl,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [AutofillHints.username, AutofillHints.email],
                               style: const TextStyle(color: AppColors.foreground),
                               decoration: InputDecoration(
                                 labelText: 'Email',
