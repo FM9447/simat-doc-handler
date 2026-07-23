@@ -181,9 +181,20 @@ class _ApprovalQueueScreenState extends ConsumerState<ApprovalQueueScreen> {
         if (['finalApproved', 'rejected'].contains(doc.status.name)) return false;
         final nextIdx = doc.approvals.length;
         if (nextIdx >= doc.workflow.length) return false;
-        final nextRole   = doc.workflow[nextIdx];
-        final assignedId = doc.assigned[nextRole];
-        return assignedId == user?.id || nextRole == user?.role;
+        final nextRole = doc.workflow[nextIdx];
+        final assignedVal = doc.assigned[nextRole];
+
+        String? assignedId;
+        if (assignedVal is Map) {
+          assignedId = assignedVal['id']?.toString() ?? assignedVal['_id']?.toString();
+        } else if (assignedVal != null) {
+          assignedId = assignedVal.toString();
+        }
+
+        final isMyTurn = (assignedId != null && assignedId == user?.id) ||
+            (user?.role != null && (nextRole == user?.role || (nextRole == 'teacher' && user?.role == 'tutor')));
+
+        return isMyTurn;
       }).toList();
     }
     final map = {

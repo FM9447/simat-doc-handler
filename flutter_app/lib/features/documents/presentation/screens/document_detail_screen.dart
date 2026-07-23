@@ -162,11 +162,21 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).value;
     final nextIdx = widget.document.approvals.length;
-    final isCurrentApprover = user != null &&
+    bool isCurrentApprover = false;
+    if (user != null &&
         nextIdx < widget.document.workflow.length &&
-        !['final_approved', 'rejected'].contains(widget.document.status.name.toLowerCase()) &&
-        (widget.document.assigned[widget.document.workflow[nextIdx]] == user.id ||
-            user.role == widget.document.workflow[nextIdx]);
+        !['final_approved', 'rejected'].contains(widget.document.status.name.toLowerCase())) {
+      final nextRole = widget.document.workflow[nextIdx];
+      final assignedVal = widget.document.assigned[nextRole];
+      String? assignedId;
+      if (assignedVal is Map) {
+        assignedId = assignedVal['id']?.toString() ?? assignedVal['_id']?.toString();
+      } else if (assignedVal != null) {
+        assignedId = assignedVal.toString();
+      }
+      isCurrentApprover = (assignedId != null && assignedId == user.id) ||
+          (user.role == nextRole || (nextRole == 'teacher' && user.role == 'tutor'));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
