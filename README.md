@@ -1,43 +1,164 @@
-# AntiGravity - Digital Document Approval System
+# SIMAT DocTransit 🎓📜
 
-This is the fully generated source code for AntiGravity.
+**SIMAT DocTransit** is a modern, paperless document request, approval, and Duty Leave management platform designed for **Sreepathy Institute of Management and Technology (SIMAT)**, affiliated to **APJ Abdul Kalam Technological University (KTU), Kerala**.
 
-## Project Structure
-- `backend/`: Node.js, Express, MongoDB REST API.
-- `flutter_app/`: Flutter 3.19+ cross-platform mobile application utilizing Riverpod for state management.
-
-## Prerequisites
-1. **Node.js**: v18+ installed on your system.
-2. **MongoDB**: A running MongoDB instance or MongoDB Atlas cluster.
-3. **Flutter**: v3.19+ installed and added to PATH.
-
-## ⚡ Quick Start (Recommended)
-You can now manage the whole project from the root folder:
-
-1.  **Backend Setup & Start**:
-    ```bash
-    npm run dev
-    ```
-    *This will automatically seed document types, approve all users, and start the server.*
-
-2.  **Frontend Start**:
-    ```bash
-    flutter run
-    ```
-    *Make sure you are in the `flutter_app/` folder or use `npm run frontend` from the root.*
-
-## 🛠️ Individual Commands (Root)
-- `npm run dev`: All-in-one Backend setup (Seed + Approve + Server). 🚀
-- `npm run backend`: Starts only the Node.js server.
-- `npm run seed`: Populates initial document flows (Bonafide, TC, etc.).
-- `npm run approve`: Approves all users instantly for testing.
-- `npm run install-all`: Installs dependencies for both Backend and Frontend.
-
-## 📱 Platform Support
-The app automatically detects the environment:
-- **Web**: Connects to `localhost:5000`.
-- **Android Emulator**: Connects to `10.0.2.2:5000`.
-- **Physical Mobile**: Connects to `192.168.1.39:5000` (Make sure phone is on the SAME Wi-FI).
+DocTransit replaces traditional paper certificate requests with a digital workflow engine (`Tutor → HOD → Office → Principal`), real-time push notifications, official SIMAT PDF generation, and automated Duty Leave attendance tracking.
 
 ---
-*For detailed administrative features, please refer to the internal walkthrough.*
+
+## 🌟 Key Features
+
+### 📄 1. Official KTU Document Requests
+- **Bonafide Certificate** (*Workflow: Tutor → HOD → Principal*)
+- **Duty Leave Application** (*Workflow: Tutor → HOD → Tutor*)
+- **Transfer Certificate (T.C.)** (*Workflow: Tutor → Office → Principal*)
+- **No Objection Certificate (N.O.C.)** (*Workflow: HOD → Principal*)
+- **Course Completion Certificate** (*Workflow: Tutor → HOD → Office → Principal*)
+
+### 📅 2. Duty Leave Management & Attendance Marking
+- **Multi-Day & Period Schedule Table**: Interactive schedule input for dates, class periods, and event reasons.
+- **Nodal Category & Faculty Assignment**: Admin management for event categories (**IEDC**, **NSS**, **MuLearn**, **IEEE**, **Sports**, **Arts**) with assigned Faculty In-Charge.
+- **Tutor Attendance Marking**: Class Tutors can mark attendance directly in official registers and notify students with one click.
+
+### 🖼️ 3. Official PDF Generation & Digital Signatures
+- Embeds the official **SIMAT Header Banner** with KTU, AICTE, NAAC, and NBA accreditation logos.
+- Supports student, tutor, HOD, and principal digital signatures stored securely.
+
+### 🔐 4. Seamless Security & Mobile/Web Experience
+- **Auto-Fill & Password Manager**: Integrated with Chrome, Safari, Android Autofill, and iOS Keychain.
+- **Role-Based Access Control**: Tailored dashboards for Students, Tutors, HODs, Office Staff, Principals, and System Admins.
+
+---
+
+## 📁 Repository Structure
+
+```
+simat-doc-handler/
+├── backend/                  # Node.js / Express REST API & MongoDB models
+│   ├── config/               # Database & Cloudinary storage configuration
+│   ├── models/               # Mongoose schemas (User, Document, DocumentType, DutyCategory)
+│   ├── routes/               # Express API endpoints
+│   ├── seed_flows.js         # KTU document template seeding script
+│   ├── clear_students_and_requests.js # Administrative data cleanup utility
+│   └── server.js             # API server entrypoint
+├── flutter_app/              # Flutter Mobile & Web Client application
+│   ├── lib/                  # Application code (Features, Models, Providers, Services)
+│   ├── assets/images/        # SIMAT header banner & visual assets
+│   └── test/                 # Automated unit and integration tests
+├── .github/workflows/        # Automated CI/CD Workflows
+│   ├── backend.yml           # Backend deployment to Azure Web App
+│   └── main_doctransit.yml   # Frontend web deployment to GitHub Pages (doctransit.live)
+└── README.md
+```
+
+---
+
+## 🚀 Complete Developer Setup Guide
+
+Follow these step-by-step instructions to set up and run **DocTransit** locally.
+
+### 📋 1. Prerequisites
+Ensure you have the following installed on your machine:
+- **Node.js**: v20.x or v24.x ([nodejs.org](https://nodejs.org/))
+- **Flutter SDK**: 3.24+ ([flutter.dev](https://flutter.dev/))
+- **MongoDB**: Local MongoDB daemon OR a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster string.
+- **Git**: Installed and configured.
+
+---
+
+### ⚙️ 2. Backend Setup & Run
+
+1. Navigate to the `backend` directory:
+   ```bash
+   cd backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create your environment configuration file `backend/.env`:
+   ```env
+   PORT=5000
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/doctransit?retryWrites=true&w=majority
+   JWT_SECRET=your_secure_jwt_secret_key
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   ```
+
+4. Start the backend server:
+   ```bash
+   # Development mode with auto-reload:
+   npm run dev
+
+   # Standard node execution:
+   node server.js
+   ```
+   *Note: Upon successful connection, `connectDB()` automatically seeds/updates all KTU document templates into MongoDB.*
+
+---
+
+### 📱 3. Flutter Mobile & Web App Setup
+
+1. Open a new terminal and navigate to `flutter_app`:
+   ```bash
+   cd flutter_app
+   ```
+
+2. Install Flutter packages:
+   ```bash
+   flutter pub get
+   ```
+
+3. Generate Riverpod provider & serialization code:
+   ```bash
+   flutter pub run build_runner build --delete-conflicting-outputs
+   ```
+
+4. Run the application:
+   ```bash
+   # View connected devices (Android / iOS / Chrome):
+   flutter devices
+
+   # Run on connected Android phone:
+   flutter run -d <device_id> --release
+
+   # Run on Web (Chrome):
+   flutter run -d chrome
+   ```
+
+5. Build production Web release bundle:
+   ```bash
+   flutter build web --release --base-href /
+   ```
+
+---
+
+### 🧪 4. Running Automated Tests
+
+Run the full Flutter test suite:
+```bash
+cd flutter_app
+flutter test
+```
+
+Run static analysis:
+```bash
+flutter analyze
+```
+
+---
+
+## 🌐 Deployment Pipeline (CI/CD)
+
+The repository includes GitHub Actions workflows under `.github/workflows/`:
+
+- **Backend (`.github/workflows/backend.yml`)**: Builds Node.js backend on push to `master` and deploys to Azure Web App (`docTransit`).
+- **Web Frontend (`.github/workflows/main_doctransit.yml`)**: Builds Flutter Web bundle and deploys to GitHub Pages at [doctransit.live](https://doctransit.live).
+
+---
+
+## 📄 License
+Maintained by Sreepathy Institute of Management and Technology (SIMAT). All rights reserved.
