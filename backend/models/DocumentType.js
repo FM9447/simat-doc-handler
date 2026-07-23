@@ -9,11 +9,11 @@ const elementSchema = mongoose.Schema({
   visible: { type: Boolean, default: true },
   placeholder: { type: String, default: '' },
   hint: { type: String, default: '' },
-  pattern: { type: String, default: '' }, // regex for validation
+  pattern: { type: String, default: '' },
   options: [{ type: String }],
   sysKey: { type: String },
   content: { type: String },
-  imageUrl: { type: String }, // For seals and header images
+  imageUrl: { type: String },
   x: { type: Number, default: 20 },
   y: { type: Number, default: 20 },
   w: { type: Number, default: 200 },
@@ -24,11 +24,11 @@ const documentTypeSchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
   steps: [{ 
     type: String, 
-    enum: ['tutor', 'hod', 'principal', 'office', 'admin'],
+    enum: ['nodal_officer', 'club_handler', 'mentor', 'tutor', 'hod', 'principal', 'office', 'admin'],
     required: true 
   }],
-  elements: [elementSchema], // Form field definitions
-  letterTemplate: { type: String, default: '' }, // Template with {{placeholders}}
+  elements: [elementSchema],
+  letterTemplate: { type: String, default: '' },
   allowCustomHeading: { type: Boolean, default: false },
   includeLetterhead: { type: Boolean, default: true },
   includeRefDate: { type: Boolean, default: true },
@@ -37,7 +37,7 @@ const documentTypeSchema = mongoose.Schema({
   customApprovedSealUrl: { type: String },
   customRejectedSealUrl: { type: String },
   isFormBased: { type: Boolean, default: false },
-  requiredFields: [{ type: String }], // Legacy — kept for backwards compat
+  requiredFields: [{ type: String }],
   isActive: { type: Boolean, default: true }
 }, {
   timestamps: true,

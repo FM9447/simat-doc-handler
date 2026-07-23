@@ -108,7 +108,9 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
       
       if (flow.steps.isNotEmpty) {
         final firstRole = flow.steps[0].toLowerCase();
-        if (firstRole == 'tutor' && user?.tutorName != null) {
+        if (['nodal_officer', 'club_handler', 'mentor'].contains(firstRole)) {
+          recipientName = 'Club Nodal Officer / In-Charge';
+        } else if (firstRole == 'tutor' && user?.tutorName != null) {
           recipientName = user!.tutorName!;
         } else if (firstRole == 'hod' && user?.departmentName != null) {
           recipientName = '${user!.departmentName!} HOD';
@@ -244,7 +246,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              currentFlow.steps.map((s) => s.toUpperCase()).join(' → '),
+                              currentFlow.steps.map((s) => s.replaceAll('_', ' ').toUpperCase()).join(' → '),
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.5),
                             ),
                           ),

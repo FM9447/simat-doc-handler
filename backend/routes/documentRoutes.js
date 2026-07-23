@@ -26,11 +26,30 @@ async function resolveDelegateInfo(userId) {
   }
   return { id: currentUser._id.toString(), name: currentUser.name };
 }
+const DutyCategory = require('../models/DutyCategory');
+
 // Helper: auto-assign approvers by role, student's tutor, and dept HOD
-async function autoAssign(steps, student) {
+async function autoAssign(steps, student, formData) {
   const assigned = {};
   for (const role of steps) {
     let query = { role: role === 'teacher' ? 'tutor' : role, isApproved: true };
+
+    // Precise assignment for Nodal Officer / Club Handler / Mentor
+    if (['nodal_officer', 'club_handler', 'mentor'].includes(role)) {
+      let clubName = formData ? (formData['Duty Category / Club'] || formData['el_1'] || formData['Duty Category']) : null;
+      if (clubName) {
+        const cat = await DutyCategory.findOne({ name: clubName.trim() });
+        if (cat && cat.facultyInChargeId) {
+          assigned[role] = await resolveDelegateInfo(cat.facultyInChargeId);
+          continue;
+        }
+      }
+      // Fallback to student's tutor if no specific nodal officer assigned to club yet
+      if (student.tutorId) {
+        assigned[role] = await resolveDelegateInfo(student.tutorId);
+        continue;
+      }
+    }
     
     // Precise assignment for Tutor
     if (role === 'tutor' || role === 'teacher') {
@@ -80,7 +99,7 @@ router.post('/', protect, authorizeRoles('student'), upload.single('file'), asyn
 
     // Auto-assign approvers
     const student = await User.findById(req.user.id);
-    const assigned = await autoAssign(workflow, student);
+    const assigned = await autoAssign(workflow, student, parsedFormData);
 
     console.log('Document creation with auto-assigned approvers:', assigned);
     
@@ -133,10 +152,15 @@ router.get('/', protect, async (req, res) => {
         .populate('approvals.approverId', 'name role')
         .sort({ createdAt: -1 });
     } else {
-      // Approvers see documents where they are strictly assigned
+      // Approvers see documents where they are assigned directly by role or as nodal_officer/club_handler
       const userId = req.user.id;
       docs = await Document.find({
-        [`assigned.${req.user.role}.id`]: userId
+        $or: [
+          { [`assigned.${req.user.role}.id`]: userId },
+          { 'assigned.nodal_officer.id': userId },
+          { 'assigned.club_handler.id': userId },
+          { 'assigned.mentor.id': userId }
+        ]
       })
         .populate('studentId', 'name registerNo dept year division tutorId departmentId')
         .populate('approvals.approverId', 'name role')

@@ -33,7 +33,7 @@ const seedInitialFlows = async () => {
     const initialFlows = [
       {
         name: 'Duty Leave Application',
-        steps: ['tutor', 'hod', 'tutor'],
+        steps: ['nodal_officer', 'tutor', 'hod', 'tutor'],
         allowCustomHeading: true,
         includeLetterhead: true,
         includeRefDate: true,
