@@ -109,7 +109,13 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
       if (flow.steps.isNotEmpty) {
         final firstRole = flow.steps[0].toLowerCase();
         if (['nodal_officer', 'club_handler', 'mentor'].contains(firstRole)) {
-          recipientName = 'Club Nodal Officer / In-Charge';
+          final selectedCat = _fieldValues['Duty Category / Club'] ?? _fieldValues['el_1'] ?? _fieldValues['Duty Category'];
+          String clubLabel = 'Club';
+          if (selectedCat != null && selectedCat.toString().isNotEmpty) {
+            final raw = selectedCat.toString();
+            clubLabel = raw.contains('(') ? raw.split('(').first.trim() : raw.trim();
+          }
+          recipientName = '$clubLabel In-Charge';
         } else if (firstRole == 'tutor' && user?.tutorName != null) {
           recipientName = user!.tutorName!;
         } else if (firstRole == 'hod' && user?.departmentName != null) {
@@ -246,7 +252,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              currentFlow.steps.map((s) => s.replaceAll('_', ' ').toUpperCase()).join(' → '),
+                              _formatWorkflowSteps(currentFlow.steps),
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.5),
                             ),
                           ),
@@ -352,6 +358,23 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
         ],
       ),
     );
+  }
+
+  String _formatWorkflowSteps(List<String> steps) {
+    final selectedCat = _fieldValues['Duty Category / Club'] ?? _fieldValues['el_1'] ?? _fieldValues['Duty Category'];
+    String clubLabel = 'CLUB';
+    if (selectedCat != null && selectedCat.toString().isNotEmpty) {
+      final raw = selectedCat.toString();
+      clubLabel = raw.contains('(') ? raw.split('(').first.trim() : raw.trim();
+    }
+
+    return steps.map((s) {
+      final lower = s.toLowerCase();
+      if (['nodal_officer', 'club_handler', 'mentor'].contains(lower)) {
+        return '${clubLabel.toUpperCase()} IN-CHARGE';
+      }
+      return s.replaceAll('_', ' ').toUpperCase();
+    }).join(' → ');
   }
 
   Widget _label(String text) => Padding(
