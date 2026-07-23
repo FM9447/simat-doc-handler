@@ -267,25 +267,103 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
               _sectionHeader('REQUEST DETAILS'),
               GlassCard(
                 child: Column(
-                  children: widget.document.formData!.entries.map((e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 120,
-                          child: Text(e.key, style: AppTypography.bodyMuted.copyWith(fontSize: 13)),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: widget.document.formData!.entries.map((e) {
+                    final rawVal = e.value?.toString() ?? '';
+
+                    // Detect pipe-delimited schedule rows (duty leave table)
+                    final isScheduleTable = rawVal.contains('|') && rawVal.contains('\n');
+                    if (isScheduleTable) {
+                      final rows = rawVal.split('\n').where((r) => r.trim().isNotEmpty).toList();
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(e.key, style: AppTypography.bodyMuted.copyWith(fontSize: 13)),
+                            const SizedBox(height: 8),
+                            Table(
+                              border: TableBorder.all(
+                                color: AppColors.border,
+                                width: 1,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              columnWidths: const {
+                                0: FlexColumnWidth(2),
+                                1: FlexColumnWidth(2),
+                                2: FlexColumnWidth(3),
+                              },
+                              children: [
+                                // Header row
+                                TableRow(
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF1E1E2E),
+                                  ),
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      child: Text('Date', style: AppTypography.labelSmall.copyWith(fontSize: 11)),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      child: Text('Hours / Periods', style: AppTypography.labelSmall.copyWith(fontSize: 11)),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      child: Text('Reason', style: AppTypography.labelSmall.copyWith(fontSize: 11)),
+                                    ),
+                                  ],
+                                ),
+                                // Data rows
+                                ...rows.map((row) {
+                                  final parts = row.split('|').map((s) => s.trim()).toList();
+                                  while (parts.length < 3) { parts.add('—'); }
+                                  return TableRow(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        child: Text(parts[0], style: AppTypography.bodyMedium.copyWith(fontSize: 12)),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        child: Text(parts[1], style: AppTypography.bodyMedium.copyWith(fontSize: 12)),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        child: Text(parts[2], style: AppTypography.bodyMedium.copyWith(fontSize: 12)),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ],
+                            ),
+                          ],
                         ),
-                        Expanded(child: Text(
-                          e.value == true ? 'Yes' : e.value == false ? 'No' : (e.value?.toString() ?? '—'),
-                          style: AppTypography.bodyMedium.copyWith(fontSize: 13),
-                        )),
-                      ],
-                    ),
-                  )).toList(),
+                      );
+                    }
+
+                    // Regular key-value row
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(e.key, style: AppTypography.bodyMuted.copyWith(fontSize: 13)),
+                          ),
+                          Expanded(child: Text(
+                            rawVal == 'true' ? 'Yes' : rawVal == 'false' ? 'No' : (rawVal.isEmpty ? '—' : rawVal),
+                            style: AppTypography.bodyMedium.copyWith(fontSize: 13),
+                          )),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ],
+
 
             if (widget.document.approvals.isNotEmpty) ...[
               const SizedBox(height: 20),

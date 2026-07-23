@@ -390,43 +390,53 @@ class PdfExportHelper {
 
           // ── AUTHORIZED SIGNATURES ────────────────────────────────────
           if (document.approvals.isNotEmpty) {
-            widgets.add(
-              pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 5),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text('Authorized Signatures:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-                    pw.SizedBox(height: 8),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.start,
-                      children: document.approvals.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final approval = entry.value;
-                        final sig = signatureImages[idx];
-                        final role = idx < document.workflow.length ? document.workflow[idx] : 'approver';
-                        final name = approval.approverId is Map ? approval.approverId['name'] ?? role : role;
-                        return pw.Container(
-                          width: 90,
-                          margin: const pw.EdgeInsets.only(right: 15),
-                          child: pw.Column(
-                            children: [
-                              sig != null
-                                  ? pw.Container(height: 25, width: 80, child: pw.Image(sig, fit: pw.BoxFit.contain))
-                                  : pw.SizedBox(height: 25),
-                              pw.Divider(thickness: 0.5),
-                              pw.Text(name.toString().toUpperCase(), style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
-                              pw.Text(role.toUpperCase(), style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600)),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
+            // Exclude the mark-duty-leave action from signature boxes
+            // (it's a marking action, not an approval signature)
+            final sigApprovals = document.approvals.asMap().entries.where((entry) {
+              final comment = entry.value.comment ?? '';
+              return !comment.contains('Duty Leave Marked') && !comment.contains('attendance register');
+            }).toList();
+
+            if (sigApprovals.isNotEmpty) {
+              widgets.add(
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('Authorized Signatures:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.start,
+                        children: sigApprovals.map((entry) {
+                          final idx = entry.key;
+                          final approval = entry.value;
+                          final sig = signatureImages[idx];
+                          final role = idx < document.workflow.length ? document.workflow[idx] : 'approver';
+                          final name = approval.approverId is Map ? approval.approverId['name'] ?? role : role;
+                          return pw.Container(
+                            width: 90,
+                            margin: const pw.EdgeInsets.only(right: 15),
+                            child: pw.Column(
+                              children: [
+                                sig != null
+                                    ? pw.Container(height: 25, width: 80, child: pw.Image(sig, fit: pw.BoxFit.contain))
+                                    : pw.SizedBox(height: 25),
+                                pw.Divider(thickness: 0.5),
+                                pw.Text(name.toString().toUpperCase(), style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
+                                pw.Text(role.toUpperCase(), style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
+
 
           return widgets;
         },
