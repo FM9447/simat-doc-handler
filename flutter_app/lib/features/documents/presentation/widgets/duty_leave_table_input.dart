@@ -78,24 +78,53 @@ class _DutyLeaveTableInputState extends State<DutyLeaveTableInput> {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row with compact Mobile-Friendly Add Row Button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.table_chart_rounded, size: 18, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text('DUTY LEAVE SCHEDULE (MULTI-DAY / HOURS)', style: AppTypography.labelSmall),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.table_chart_rounded, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'DUTY LEAVE SCHEDULE',
+                        style: AppTypography.labelSmall.copyWith(fontSize: 11),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              TextButton.icon(
-                onPressed: _addRow,
-                icon: const Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
-                label: const Text('Add Row', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: _addRow,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_circle_rounded, size: 14, color: AppColors.primary),
+                      SizedBox(width: 4),
+                      Text(
+                        'Add Row',
+                        style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -127,7 +156,6 @@ class _DutyLeaveTableInputState extends State<DutyLeaveTableInput> {
                         const SizedBox(width: 10),
                         // Date Picker Button
                         Expanded(
-                          flex: 2,
                           child: InkWell(
                             onTap: () => _selectDate(context, index),
                             borderRadius: BorderRadius.circular(8),
@@ -148,15 +176,17 @@ class _DutyLeaveTableInputState extends State<DutyLeaveTableInput> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         // Delete row button
-                        if (_rows.length > 1)
+                        if (_rows.length > 1) ...[
+                          const SizedBox(width: 8),
                           IconButton(
                             icon: const Icon(Icons.remove_circle_outline_rounded, size: 20, color: AppColors.rejected),
                             onPressed: () => _removeRow(index),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
+                            tooltip: 'Remove Row',
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -170,7 +200,7 @@ class _DutyLeaveTableInputState extends State<DutyLeaveTableInput> {
                             style: const TextStyle(fontSize: 12, color: AppColors.foreground),
                             decoration: const InputDecoration(
                               labelText: 'Hours / Periods',
-                              hintText: 'e.g. Periods 1-4 or 6 Hrs',
+                              hintText: 'e.g. Periods 1-4',
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             ),
@@ -188,8 +218,8 @@ class _DutyLeaveTableInputState extends State<DutyLeaveTableInput> {
                             initialValue: row.reason,
                             style: const TextStyle(fontSize: 12, color: AppColors.foreground),
                             decoration: const InputDecoration(
-                              labelText: 'Reason / Event Details',
-                              hintText: 'e.g. Hackathon Representation',
+                              labelText: 'Reason / Details',
+                              hintText: 'e.g. Hackathon',
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             ),
@@ -205,6 +235,32 @@ class _DutyLeaveTableInputState extends State<DutyLeaveTableInput> {
                 ),
               );
             },
+          ),
+          const SizedBox(height: 12),
+          // Prominent Mobile Add Row Button at bottom
+          InkWell(
+            onTap: _addRow,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.primary.withOpacity(0.35)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_circle_outline_rounded, size: 16, color: AppColors.primary),
+                  SizedBox(width: 6),
+                  Text(
+                    '+ Add Another Activity / Day',
+                    style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
