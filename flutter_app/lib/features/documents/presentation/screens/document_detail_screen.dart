@@ -178,6 +178,14 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           (user.role == nextRole || (nextRole == 'teacher' && user.role == 'tutor'));
     }
 
+    final isDutyLeaveDoc = widget.document.category.toLowerCase().contains('duty') ||
+        (widget.document.flow != null && widget.document.flow!.toLowerCase().contains('duty'));
+    final isLastStep = nextIdx == widget.document.workflow.length - 1;
+    final isTutorOrAdmin = user?.role == 'tutor' || user?.role == 'admin';
+    final hasDutyLeaveBeenMarked = widget.document.status == DocumentStatus.finalApproved ||
+        widget.document.approvals.any((a) =>
+            (a.comment ?? '').contains('Duty Leave Marked') || (a.comment ?? '').contains('attendance register'));
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -382,8 +390,32 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                         ),
                       ],
                     ),
+              if (isDutyLeaveDoc && isTutorOrAdmin && hasDutyLeaveBeenMarked) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.approved.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.approved.withOpacity(0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: AppColors.approved, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Duty Leave Marked',
+                        style: TextStyle(color: AppColors.approved, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               if (isCurrentApprover && !_isSigning) ...[
-                if (user?.role == 'tutor' || user?.role == 'admin') ...[
+                if (isDutyLeaveDoc && isTutorOrAdmin && isLastStep && !hasDutyLeaveBeenMarked) ...[
                   const SizedBox(height: 12),
                   GradientButton(
                     text: 'Mark Duty Leave in Register',
