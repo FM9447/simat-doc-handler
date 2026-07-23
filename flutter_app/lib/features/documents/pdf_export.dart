@@ -81,8 +81,86 @@ class PdfExportHelper {
       'ref_no': _refNo(),
       'To_Whom_It_May_Concern': 'To Whom It May Concern,',
       'Sincerely': 'Sincerely,',
-      ...(document.formData?.map((k, v) => MapEntry(k.replaceAll(' ', '_'), v?.toString() ?? '')) ?? {}),
     };
+
+    if (document.formData != null) {
+      document.formData!.forEach((k, v) {
+        final valStr = v?.toString() ?? '';
+        final rawKey = k.toString().trim();
+        final lowerKey = rawKey.toLowerCase();
+        final snakeKey = lowerKey.replaceAll(RegExp(r'[^a-z0-9]+'), '_').replaceAll(RegExp(r'^_|_$'), '');
+
+        subs[rawKey] = valStr;
+        subs[rawKey.replaceAll(' ', '_')] = valStr;
+        subs[lowerKey] = valStr;
+        subs[snakeKey] = valStr;
+
+        // Specific aliases for Duty Leave
+        if (lowerKey.contains('duty category') || lowerKey.contains('club')) {
+          subs['duty_category'] = valStr;
+          subs['dutyCategory'] = valStr;
+        }
+        if (lowerKey.contains('event') || lowerKey.contains('activity')) {
+          subs['event_name'] = valStr;
+          subs['eventName'] = valStr;
+        }
+        if (lowerKey.contains('schedule') || lowerKey.contains('table')) {
+          subs['duty_leave_schedule'] = valStr;
+          subs['dutyLeaveSchedule'] = valStr;
+        }
+        if (lowerKey.contains('total hours') || lowerKey.contains('granted') || lowerKey.contains('periods')) {
+          subs['total_hours_granted'] = valStr;
+          subs['totalHoursGranted'] = valStr;
+        }
+
+        // Specific aliases for Bonafide
+        if (lowerKey.contains('purpose')) {
+          subs['purpose_of_certificate'] = valStr;
+          subs['purposeOfCertificate'] = valStr;
+        }
+        if (lowerKey.contains('academic year')) {
+          subs['academic_year'] = valStr;
+          subs['academicYear'] = valStr;
+        }
+
+        // Specific aliases for Transfer Certificate
+        if (lowerKey.contains('admission') || lowerKey.contains('reg')) {
+          subs['admission_no_or_reg'] = valStr;
+          subs['admissionNoOrReg'] = valStr;
+        }
+        if (lowerKey.contains('birth')) {
+          subs['date_of_birth'] = valStr;
+          subs['dateOfBirth'] = valStr;
+        }
+        if (lowerKey.contains('leaving date') || lowerKey.contains('leaving')) {
+          subs['leaving_date'] = valStr;
+        }
+        if (lowerKey.contains('reason')) {
+          subs['reason_for_leaving'] = valStr;
+        }
+        if (lowerKey.contains('promotion')) {
+          subs['promotion_status'] = valStr;
+        }
+        if (lowerKey.contains('conduct')) {
+          subs['character_and_conduct'] = valStr;
+          subs['overall_conduct'] = valStr;
+        }
+
+        // Specific aliases for NOC & Course Completion
+        if (lowerKey.contains('company') || lowerKey.contains('institution')) {
+          subs['company_or_institution'] = valStr;
+        }
+        if (lowerKey.contains('start date')) {
+          subs['start_date'] = valStr;
+        }
+        if (lowerKey.contains('end date')) {
+          subs['end_date'] = valStr;
+        }
+        if (lowerKey.contains('duration')) {
+          subs['duration_of_study'] = valStr;
+        }
+      });
+    }
 
     pw.ImageProvider? defaultHeaderImage;
     try {
@@ -223,6 +301,15 @@ class PdfExportHelper {
             for (final line in lines) {
               String processed = line;
               subs.forEach((k, v) => processed = processed.replaceAll('{{$k}}', v));
+              processed = processed.replaceAllMapped(RegExp(r'\{\{\s*([a-zA-Z0-9_\s\/]+)\s*\}\}'), (match) {
+                final tag = match.group(1)?.trim() ?? '';
+                final tagLower = tag.toLowerCase();
+                final tagSnake = tagLower.replaceAll(RegExp(r'[^a-z0-9]+'), '_').replaceAll(RegExp(r'^_|_$'), '');
+                if (subs.containsKey(tag)) return subs[tag]!;
+                if (subs.containsKey(tagLower)) return subs[tagLower]!;
+                if (subs.containsKey(tagSnake)) return subs[tagSnake]!;
+                return '';
+              });
               bodyChildren.add(
                 pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 6),
