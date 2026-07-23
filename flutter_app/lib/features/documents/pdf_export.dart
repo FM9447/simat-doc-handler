@@ -310,16 +310,68 @@ class PdfExportHelper {
                 if (subs.containsKey(tagSnake)) return subs[tagSnake]!;
                 return '';
               });
-              bodyChildren.add(
-                pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 6),
-                  child: pw.Paragraph(
-                    text: processed,
-                    style: const pw.TextStyle(fontSize: 10.5, lineSpacing: 3),
+
+              // Detect pipe-delimited schedule table (e.g. from duty leave)
+              final scheduleRows = processed.split('\n').where((r) => r.contains('|')).toList();
+              if (scheduleRows.isNotEmpty && processed.contains('|')) {
+                // Build a proper bordered table
+                final tableData = scheduleRows.map((r) =>
+                  r.split('|').map((c) => c.trim()).toList()
+                ).toList();
+
+                // Ensure every row has 3 columns
+                for (final row in tableData) {
+                  while (row.length < 3) { row.add('—'); }
+                }
+
+                bodyChildren.add(pw.SizedBox(height: 6));
+                bodyChildren.add(
+                  pw.Table(
+                    border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.8),
+                    columnWidths: const {
+                      0: pw.FlexColumnWidth(2.2),
+                      1: pw.FlexColumnWidth(2.2),
+                      2: pw.FlexColumnWidth(3.6),
+                    },
+                    children: [
+                      // Header row
+                      pw.TableRow(
+                        decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                        children: ['Date', 'Hours / Periods', 'Reason / Activity'].map((h) =>
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                            child: pw.Text(h,
+                              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800),
+                            ),
+                          ),
+                        ).toList(),
+                      ),
+                      // Data rows
+                      ...tableData.map((cols) => pw.TableRow(
+                        children: [cols[0], cols[1], cols[2]].map((cell) =>
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                            child: pw.Text(cell, style: const pw.TextStyle(fontSize: 9)),
+                          ),
+                        ).toList(),
+                      )),
+                    ],
                   ),
-                ),
-              );
+                );
+                bodyChildren.add(pw.SizedBox(height: 6));
+              } else {
+                bodyChildren.add(
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 6),
+                    child: pw.Paragraph(
+                      text: processed,
+                      style: const pw.TextStyle(fontSize: 10.5, lineSpacing: 3),
+                    ),
+                  ),
+                );
+              }
             }
+
 
             widgets.add(
               pw.Padding(
