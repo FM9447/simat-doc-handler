@@ -26,7 +26,7 @@ if (isCloudinaryConfigured) {
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-      folder: 'antigravity_docs',
+      folder: 'Simat-doc-handler',
       allowed_formats: ['jpg', 'png', 'pdf'],
       resource_type: 'auto', // Important for PDF support
     },
