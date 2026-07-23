@@ -372,6 +372,15 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
                       ],
                     ),
               if (isCurrentApprover && !_isSigning) ...[
+                if (user?.role == 'tutor' || user?.role == 'admin') ...[
+                  const SizedBox(height: 12),
+                  GradientButton(
+                    text: 'Mark Duty Leave in Register',
+                    icon: Icons.playlist_add_check_circle_rounded,
+                    onPressed: _markDutyLeave,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 GradientButton(
                   text: 'Transfer/Delegate Request',
@@ -444,6 +453,62 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _markDutyLeave() async {
+    final commentCtrl = TextEditingController();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
+        title: Text('Mark Duty Leave in Register', style: AppTypography.headingSmall),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Confirming this action will mark the Duty Leave in official college attendance registers and notify the student.',
+                style: AppTypography.bodyMuted.copyWith(fontSize: 13)),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: commentCtrl,
+              style: const TextStyle(color: AppColors.foreground),
+              decoration: const InputDecoration(labelText: 'Remarks / Attendance Note', hintText: 'e.g. Attendance marked in register'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          GradientButton(
+            text: 'Mark & Notify',
+            icon: Icons.check_rounded,
+            onPressed: () => Navigator.pop(ctx, true),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await apiService.post('/documents/${widget.document.id}/mark-duty-leave', {
+          'comment': commentCtrl.text.trim(),
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Duty Leave marked in attendance register! Student notified.')),
+          );
+          ref.read(documentProvider.notifier).fetchDocuments();
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error marking duty leave: $e')),
+          );
+        }
+      }
+    }
   }
 
   Widget _sectionHeader(String title) => Padding(

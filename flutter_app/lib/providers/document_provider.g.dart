@@ -6,12 +6,14 @@ part of 'document_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$documentListHash() => r'1678463957549095667129163cc11e067f51f5fc';
+String _$documentListHash() => r'b88d903304af2fbaddb32b01d740cc960dad1156';
 
 /// See also [DocumentList].
 @ProviderFor(DocumentList)
-final documentListProvider = AutoDisposeAsyncNotifierProvider<DocumentList,
-    List<DocumentModel>>.internal(
+final documentListProvider = AutoDisposeAsyncNotifierProvider<
+  DocumentList,
+  List<DocumentModel>
+>.internal(
   DocumentList.new,
   name: r'documentListProvider',
   debugGetCreateSourceHash:

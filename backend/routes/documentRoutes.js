@@ -211,6 +211,44 @@ router.post('/:id/approve', protect, upload.single('signature'), async (req, res
   }
 });
 
+// @desc    Mark Duty Leave in register and notify student (Tutor only)
+// @route   POST /api/documents/:id/mark-duty-leave
+// @access  Private (Tutor/Admin only)
+router.post('/:id/mark-duty-leave', protect, async (req, res) => {
+  try {
+    const { comment } = req.body;
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    if (req.user.role !== 'tutor' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only tutors or admins can mark Duty Leave' });
+    }
+
+    document.approvals.push({
+      approverId: req.user.id,
+      role: req.user.role,
+      action: 'approved',
+      comment: `Duty Leave Marked in Attendance Register. ${comment || ''}`,
+    });
+
+    document.status = 'final_approved';
+    await document.save();
+
+    await NotificationService.send(
+      document.studentId,
+      `🎉 Great news! Your Duty Leave for "${document.title}" has been marked in official college attendance registers by your tutor ${req.user.name}.`,
+      'ok'
+    );
+
+    res.json({ message: 'Duty leave marked in register successfully', document });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @desc    Transfer document to another approver
 // @route   POST /api/documents/:id/transfer
 // @access  Private (Assigned approver or Admin only)

@@ -6,19 +6,19 @@ part of 'auth_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$authHash() => r'd6a4ad15918228e25d2d3de2594e99626f198a6a';
+String _$authHash() => r'fc5c8e3f34901fea1eb7810a8ea6ee37d20e0cf0';
 
 /// See also [Auth].
 @ProviderFor(Auth)
 final authProvider =
     AutoDisposeAsyncNotifierProvider<Auth, UserModel?>.internal(
-  Auth.new,
-  name: r'authProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$authHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      Auth.new,
+      name: r'authProvider',
+      debugGetCreateSourceHash:
+          const bool.fromEnvironment('dart.vm.product') ? null : _$authHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef _$Auth = AutoDisposeAsyncNotifier<UserModel?>;
 // ignore_for_file: type=lint

@@ -16,6 +16,7 @@ import '../../../../shared/widgets/glass_card.dart';
 import '../../../../shared/widgets/gradient_button.dart';
 import '../../../../shared/widgets/loading_logo.dart';
 import '../../../../shared/widgets/branded_title.dart';
+import '../widgets/duty_leave_table_input.dart';
 
 class NewRequestScreen extends ConsumerStatefulWidget {
   const NewRequestScreen({super.key});
@@ -423,6 +424,13 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
           onChanged: (v) => setState(() => _fieldValues[label] = v ?? false),
           activeColor: AppColors.primary,
           contentPadding: EdgeInsets.zero,
+        );
+      case 'table':
+        return DutyLeaveTableInput(
+          onChanged: (rows) {
+            final formatted = rows.map((r) => '${r.date} | ${r.hours} | ${r.reason}').join('\n');
+            _fieldValues[label] = formatted;
+          },
         );
       default: return const SizedBox.shrink();
     }

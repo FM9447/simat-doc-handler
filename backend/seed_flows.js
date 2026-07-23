@@ -47,6 +47,47 @@ This certificate is issued upon the request of the student for the purpose of {{
         ]
       },
       {
+        name: 'Duty Leave Application',
+        steps: ['tutor', 'hod', 'tutor'],
+        allowCustomHeading: true,
+        includeLetterhead: true,
+        includeRefDate: true,
+        includeSeal: true,
+        isFormBased: true,
+        templateTo: 'To The Head of Department / Tutor,',
+        templateClosing: 'Class Tutor / Authorized Signatory',
+        letterTemplate: `DUTY LEAVE APPLICATION & CERTIFICATION
+
+This is to certify that Mr./Ms. {{name}} (KTU Reg. No: {{registerNo}}), student of {{dept}} Department, Year {{year}} (Div: {{division}}), has participated in official activities under {{duty_category}} (Organizing Body / Nodal Event: {{event_name}}).
+
+The student has been granted Duty Leave for the specific dates and class hours/periods enumerated in the schedule below:
+
+{{duty_leave_schedule}}
+
+Total Hours / Periods Granted: {{total_hours_granted}}
+
+Recommendation: The Class Tutor is authorized to mark Duty Leave in official college attendance registers accordingly.`,
+        elements: [
+          {
+            id: 'el_1', kind: 'field', label: 'Duty Category / Club', type: 'select',
+            options: ['IEDC (Innovation & Entrepreneurship Cell)', 'NSS (National Service Scheme)', 'MuLearn Campus Chapter', 'IEEE Student Branch', 'College Sports Team', 'Arts & Cultural Event', 'Department Technical Fest', 'Other Official Representation'],
+            required: true, visible: true
+          },
+          {
+            id: 'el_2', kind: 'field', label: 'Event or Activity Name', type: 'text',
+            required: true, visible: true, placeholder: 'e.g. State Hackathon / Annual NSS Camp'
+          },
+          {
+            id: 'el_3', kind: 'field', label: 'Duty Leave Schedule', type: 'table',
+            required: true, visible: true, placeholder: 'Tabular Schedule of Dates & Hours'
+          },
+          {
+            id: 'el_4', kind: 'field', label: 'Total Hours Granted', type: 'text',
+            required: true, visible: true, placeholder: 'e.g. 12 Hours / 4 Periods'
+          }
+        ]
+      },
+      {
         name: 'Transfer Certificate',
         // WORKFLOW STEPS MUST NOT BE CHANGED
         steps: ['tutor', 'office', 'principal'],

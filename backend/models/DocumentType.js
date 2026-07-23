@@ -4,7 +4,7 @@ const elementSchema = mongoose.Schema({
   id: { type: String, required: true },
   kind: { type: String, enum: ['field', 'system', 'header', 'address', 'divider', 'seal', 'header_image'], default: 'field' },
   label: { type: String },
-  type: { type: String, enum: ['text', 'number', 'date', 'textarea', 'select', 'checkbox'], default: 'text' },
+  type: { type: String, enum: ['text', 'number', 'date', 'textarea', 'select', 'checkbox', 'table'], default: 'text' },
   required: { type: Boolean, default: false },
   visible: { type: Boolean, default: true },
   placeholder: { type: String, default: '' },
