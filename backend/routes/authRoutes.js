@@ -373,6 +373,27 @@ router.put('/users/:id', protect, authorizeRoles('admin'), async (req, res) => {
   }
 });
 
+// @desc    Clear all students and document requests (Admin only)
+// @route   DELETE /api/auth/clear-students-requests
+router.delete('/clear-students-requests', protect, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const Document = require('../models/Document');
+    const Notification = require('../models/Notification');
+
+    const docResult = await Document.deleteMany({});
+    const studentResult = await User.deleteMany({ role: 'student' });
+    await Notification.deleteMany({});
+
+    res.json({
+      message: 'Successfully cleared all student accounts and document requests.',
+      deletedDocuments: docResult.deletedCount,
+      deletedStudents: studentResult.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 
 // @desc    Update FCM Token
