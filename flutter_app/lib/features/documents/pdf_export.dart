@@ -181,8 +181,8 @@ class PdfExportHelper {
 
       if (headerImage != null) {
         letterheadWidget = pw.Container(
-          height: 120,
-          margin: const pw.EdgeInsets.only(top: 15, left: 15, right: 15, bottom: 10),
+          height: 110,
+          margin: const pw.EdgeInsets.only(top: 10, left: 15, right: 15, bottom: 0),
           alignment: pw.Alignment.topCenter,
           child: pw.Image(headerImage, width: PdfPageFormat.a4.width, fit: pw.BoxFit.contain),
         );
@@ -415,7 +415,7 @@ class PdfExportHelper {
 
             widgets.add(
               pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+                padding: const pw.EdgeInsets.only(left: 40, right: 40, top: 10, bottom: 0),
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -425,10 +425,10 @@ class PdfExportHelper {
                       crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
                         pw.Text(wf.templateClosing.trim(), style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
-                        pw.SizedBox(height: 4),
+                        pw.SizedBox(height: 2),
                         studentSigImage != null
-                            ? pw.Image(studentSigImage, height: 25, width: 50, fit: pw.BoxFit.contain)
-                            : pw.SizedBox(height: 25),
+                            ? pw.Image(studentSigImage, height: 20, width: 50, fit: pw.BoxFit.contain)
+                            : pw.SizedBox(height: 20),
                         pw.SizedBox(height: 4),
                         pw.Text(studentName.toUpperCase(), style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
                         pw.Text(studentReg, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
@@ -452,12 +452,12 @@ class PdfExportHelper {
             if (sigApprovals.isNotEmpty) {
               widgets.add(
                 pw.Padding(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+                  padding: const pw.EdgeInsets.only(left: 40, right: 40, top: 10, bottom: 5),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text('Authorized Signatures:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-                      pw.SizedBox(height: 8),
+                      pw.SizedBox(height: 6),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.start,
                         children: sigApprovals.map((entry) {
@@ -472,8 +472,8 @@ class PdfExportHelper {
                             child: pw.Column(
                               children: [
                                 sig != null
-                                    ? pw.Container(height: 25, width: 80, child: pw.Image(sig, fit: pw.BoxFit.contain))
-                                    : pw.SizedBox(height: 25),
+                                    ? pw.Container(height: 20, width: 70, child: pw.Image(sig, fit: pw.BoxFit.contain))
+                                    : pw.SizedBox(height: 20),
                                 pw.Divider(thickness: 0.5),
                                 pw.Text(name.toString().toUpperCase(), style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
                                 pw.Text(role.toUpperCase(), style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600)),
@@ -495,7 +495,7 @@ class PdfExportHelper {
         footer: (pw.Context context) {
           final verifyUrl = 'https://api.doctransit.live/verify/${document.id}';
           return pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: 16, left: 40, right: 40, top: 4),
+            padding: const pw.EdgeInsets.only(bottom: 12, left: 40, right: 40, top: 4),
             child: pw.Column(
               mainAxisSize: pw.MainAxisSize.min,
               children: [
@@ -525,8 +525,8 @@ class PdfExportHelper {
                         pw.BarcodeWidget(
                           barcode: pw.Barcode.qrCode(),
                           data: verifyUrl,
-                          width: 52,
-                          height: 52,
+                          width: 36,
+                          height: 36,
                           drawText: false,
                         ),
                         pw.SizedBox(height: 2),
