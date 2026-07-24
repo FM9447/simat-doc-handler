@@ -526,8 +526,8 @@ class PdfExportHelper {
                         pw.BarcodeWidget(
                           barcode: pw.Barcode.qrCode(),
                           data: verifyUrl,
-                          width: 36,
-                          height: 36,
+                          width: 50,
+                          height: 50,
                           drawText: false,
                         ),
                         pw.SizedBox(height: 2),
