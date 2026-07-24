@@ -64,7 +64,6 @@ function buildHtml(data) {
     '<div class="card"><div class="card-title">Approval Chain (' + stepsLabel + ')</div>' +
     (chainRows || noApprovals) +
     '</div>' +
-    '<div class="doc-id">Document ID: ' + docId + '</div>' +
     '<div class="footer">Verified by DocTransit &middot; SREEPATHY INSTITUTE OF MANAGEMENT AND TECHNOLOGY</div>' +
     '</div></body></html>';
 }
