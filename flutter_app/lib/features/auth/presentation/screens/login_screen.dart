@@ -10,7 +10,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../dashboard/presentation/screens/main_screen.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -212,26 +211,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                           const SizedBox(height: 28),
 
-                          // Register link
+                          // Info text instead of register link
                           Center(
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                              ),
-                              child: RichText(
-                                text: TextSpan(
-                                  style: AppTypography.bodyMuted,
-                                  children: const [
-                                    TextSpan(text: "Don't have an account? "),
-                                    TextSpan(
-                                      text: 'Register',
-                                      style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'Contact your administrator to create an account.',
+                                style: AppTypography.bodyMuted.copyWith(fontSize: 12),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ),

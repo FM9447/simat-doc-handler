@@ -383,5 +383,50 @@ router.put('/:id', protect, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// @desc    Public document verification (no auth required)
+// @route   GET /api/documents/verify/:id
+// @access  Public
+router.get('/verify/:id', async (req, res) => {
+  try {
+    const doc = await Document.findById(req.params.id)
+      .populate('studentId', 'name registerNo dept year division departmentId')
+      .select('-fileUrl -formData');
+
+    if (!doc) return res.status(404).json({ message: 'Document not found or verification link is invalid.' });
+
+    // Build sanitized approval chain
+    const approvalChain = doc.approvals
+      .filter(a => !((a.comment || '').includes('Duty Leave Marked')))
+      .map(a => ({
+        name: a.approverId && typeof a.approverId === 'object' ? a.approverId['name'] || 'Staff' : 'Staff',
+        role: (a.role || '').toUpperCase(),
+        action: a.action,
+        date: a.createdAt,
+      }));
+
+    const studentName = doc.studentId && typeof doc.studentId === 'object'
+      ? doc.studentId['name'] || '' : '';
+    const studentReg  = doc.studentId && typeof doc.studentId === 'object'
+      ? doc.studentId['registerNo'] || '' : '';
+    const studentDept = doc.studentId && typeof doc.studentId === 'object'
+      ? doc.studentId['dept'] || '' : '';
+
+    res.json({
+      verified: doc.status === 'final_approved',
+      documentId: doc._id,
+      title: doc.title,
+      category: doc.flow || doc.category,
+      status: doc.status,
+      studentName,
+      studentRegNo: studentReg,
+      department: studentDept,
+      submittedOn: doc.createdAt,
+      approvalChain,
+      totalApprovals: approvalChain.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;

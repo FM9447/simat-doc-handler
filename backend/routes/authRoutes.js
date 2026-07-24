@@ -2,9 +2,14 @@ const express = require('express');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const XLSX = require('xlsx');
 const { upload } = require('../config/cloudinary');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const NotificationService = require('../services/notificationService');
+
+// Multer for in-memory Excel/CSV uploads (admin bulk import)
+const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = express.Router();
 
@@ -63,10 +68,10 @@ router.delete('/users/:id', protect, authorizeRoles('admin'), async (req, res) =
   }
 });
 
-// @desc    Register a new user
+// @desc    Register a new user (ADMIN ONLY — public registration removed)
 // @route   POST /api/auth/register
-// @access  Public
-router.post('/register', async (req, res) => {
+// @access  Private (Admin only)
+router.post('/register', protect, authorizeRoles('admin'), async (req, res) => {
   try {
     const { name, email, password, role, registerNo, dept, departmentId, tutorId, year, division } = req.body;
 
@@ -395,6 +400,120 @@ router.delete('/clear-students-requests', protect, authorizeRoles('admin'), asyn
 });
 
 
+
+// ─────────────────────────────────────────────────────────────────────────
+// ADMIN USER CREATION
+// ─────────────────────────────────────────────────────────────────────────
+
+// @desc    Create a single user (Admin only)
+// @route   POST /api/auth/admin/create-user
+// @access  Private (Admin only)
+router.post('/admin/create-user', protect, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { name, email, password, role, registerNo, dept, departmentId, tutorId, year, division } = req.body;
+
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'name, email, password and role are required' });
+    }
+
+    const exists = await User.findOne({ email: email.toLowerCase().trim() });
+    if (exists) return res.status(400).json({ message: `User with email ${email} already exists` });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const finalRole = role === 'teacher' ? 'tutor' : role;
+
+    const user = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      role: finalRole,
+      registerNo, dept, departmentId, tutorId, year, division,
+      isApproved: true, // Admin-created users are pre-approved
+    });
+
+    res.status(201).json({
+      message: `User ${user.name} created successfully`,
+      _id: user._id, name: user.name, email: user.email, role: user.role, isApproved: true,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Bulk import users from Excel/CSV (Admin only)
+// @route   POST /api/auth/admin/bulk-import
+// @access  Private (Admin only)
+// Expected columns: name | email | password | role | registerNo | dept | year | division | departmentId | tutorEmail
+router.post('/admin/bulk-import', protect, authorizeRoles('admin'), memUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded. Send file as multipart/form-data field named "file".' });
+
+    // Parse workbook
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    if (!rows.length) return res.status(400).json({ message: 'File is empty or has no data rows.' });
+
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const [idx, row] of rows.entries()) {
+      const rowNum = idx + 2; // Row 1 = header
+      const name  = (row['name'] || row['Name'] || '').toString().trim();
+      const email = (row['email'] || row['Email'] || '').toString().trim().toLowerCase();
+      const password = (row['password'] || row['Password'] || '').toString().trim();
+      const role  = (row['role'] || row['Role'] || 'student').toString().trim().toLowerCase();
+      const registerNo = (row['registerNo'] || row['RegisterNo'] || row['register_no'] || '').toString().trim();
+      const dept  = (row['dept'] || row['Dept'] || row['department'] || '').toString().trim();
+      const year  = (row['year'] || row['Year'] || '').toString().trim();
+      const division = (row['division'] || row['Division'] || '').toString().trim();
+      const tutorEmail = (row['tutorEmail'] || row['TutorEmail'] || row['tutor_email'] || '').toString().trim();
+      let departmentId = (row['departmentId'] || row['DepartmentId'] || '').toString().trim();
+
+      if (!name || !email || !password) {
+        results.errors.push(`Row ${rowNum}: name, email, and password are required.`);
+        continue;
+      }
+
+      const exists = await User.findOne({ email });
+      if (exists) { results.skipped++; continue; }
+
+      // Resolve tutorEmail → tutorId
+      let tutorId;
+      if (tutorEmail) {
+        const tutor = await User.findOne({ email: tutorEmail, role: { $in: ['tutor', 'teacher'] } });
+        if (tutor) tutorId = tutor._id;
+      }
+
+      try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const finalRole = role === 'teacher' ? 'tutor' : role;
+
+        await User.create({
+          name, email, password: hashedPassword,
+          role: finalRole, registerNo, dept, year, division,
+          departmentId: departmentId || undefined,
+          tutorId: tutorId || undefined,
+          isApproved: true,
+        });
+        results.created++;
+      } catch (e) {
+        results.errors.push(`Row ${rowNum} (${email}): ${e.message}`);
+      }
+    }
+
+    res.json({
+      message: `Import complete: ${results.created} created, ${results.skipped} skipped (already exist), ${results.errors.length} errors.`,
+      ...results,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────
 
 // @desc    Update FCM Token
 // @route   POST /api/auth/fcm-token

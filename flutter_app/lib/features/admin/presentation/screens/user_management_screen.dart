@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../../providers/admin_provider.dart';
 import '../../../../providers/duty_category_provider.dart';
 import '../../../../models/user_model.dart';
@@ -12,6 +13,7 @@ import '../../../../shared/widgets/notification_bell.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/loading_logo.dart';
 import '../../../../shared/widgets/branded_title.dart';
+import '../../../../services/api_service.dart';
 import 'department_management_screen.dart';
 import 'duty_category_management_screen.dart';
 
@@ -211,6 +213,29 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
           ),
         ),
       ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'import_excel',
+            onPressed: () => _importExcel(context),
+            backgroundColor: const Color(0xFF1e1e2e),
+            foregroundColor: AppColors.secondary,
+            icon: const Icon(Icons.upload_file_rounded, size: 20),
+            label: const Text('Import Excel', style: TextStyle(fontSize: 13)),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add_user',
+            onPressed: () => _showAddUserDialog(context),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.person_add_rounded, size: 20),
+            label: const Text('Add User', style: TextStyle(fontSize: 13)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -227,12 +252,309 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     );
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADD USER DIALOG
+  // ──────────────────────────────────────────────────────────────────────────
+  void _showAddUserDialog(BuildContext ctx) {
+    final nameCtrl  = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final pwCtrl    = TextEditingController();
+    final regCtrl   = TextEditingController();
+    final deptCtrl  = TextEditingController();
+    String selectedRole = 'student';
+    int? selectedYear;
+    String? selectedDivision;
+    String? selectedDeptId;
+    String? selectedTutorId;
+    bool isLoading = false;
+    final formKey  = GlobalKey<FormState>();
+
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx2, setS) {
+          final depts   = ref.watch(adminDepartmentProvider).valueOrNull ?? [];
+          final allUsers = ref.watch(adminUserProvider).valueOrNull ?? [];
+          final tutors   = allUsers.where((u) => u.role == 'tutor').toList();
+
+          return AlertDialog(
+            backgroundColor: AppColors.card,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
+            title: Row(
+              children: [
+                const Icon(Icons.person_add_rounded, color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Text('Add New User', style: AppTypography.headingSmall),
+              ],
+            ),
+            content: SizedBox(
+              width: 400,
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nameCtrl,
+                        style: const TextStyle(color: AppColors.foreground),
+                        decoration: const InputDecoration(labelText: 'Full Name *', prefixIcon: Icon(Icons.person_outline, size: 18)),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(color: AppColors.foreground),
+                        decoration: const InputDecoration(labelText: 'Email *', prefixIcon: Icon(Icons.email_outlined, size: 18)),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: pwCtrl,
+                        obscureText: true,
+                        style: const TextStyle(color: AppColors.foreground),
+                        decoration: const InputDecoration(labelText: 'Password *', prefixIcon: Icon(Icons.lock_outline, size: 18)),
+                        validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedRole,
+                        decoration: const InputDecoration(labelText: 'Role *'),
+                        dropdownColor: AppColors.card,
+                        style: const TextStyle(color: AppColors.foreground, fontSize: 14),
+                        items: ['student', 'tutor', 'hod', 'office', 'principal', 'admin']
+                            .map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase())))
+                            .toList(),
+                        onChanged: (v) => setS(() => selectedRole = v!),
+                      ),
+                      if (!['office', 'principal', 'admin'].contains(selectedRole)) ...[
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: selectedDeptId,
+                          decoration: const InputDecoration(labelText: 'Department'),
+                          dropdownColor: AppColors.card,
+                          hint: const Text('Select Department', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                          items: depts.map((d) => DropdownMenuItem(value: d['_id'].toString(), child: Text(d['name'].toString()))).toList(),
+                          onChanged: (v) => setS(() => selectedDeptId = v),
+                        ),
+                      ],
+                      if (selectedRole == 'student') ...[
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: regCtrl,
+                          style: const TextStyle(color: AppColors.foreground),
+                          decoration: const InputDecoration(labelText: 'Register No.', prefixIcon: Icon(Icons.badge_outlined, size: 18)),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: deptCtrl,
+                          style: const TextStyle(color: AppColors.foreground),
+                          decoration: const InputDecoration(labelText: 'Dept (short, e.g. CSE)', prefixIcon: Icon(Icons.school_outlined, size: 18)),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int>(
+                          value: selectedYear,
+                          decoration: const InputDecoration(labelText: 'Year'),
+                          dropdownColor: AppColors.card,
+                          hint: const Text('Select Year', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                          items: [1, 2, 3, 4].map((y) => DropdownMenuItem(value: y, child: Text('Year $y'))).toList(),
+                          onChanged: (v) => setS(() => selectedYear = v),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: selectedDivision,
+                          decoration: const InputDecoration(labelText: 'Division (optional)'),
+                          dropdownColor: AppColors.card,
+                          hint: const Text('None', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                          items: ['A', 'B'].map((d) => DropdownMenuItem(value: d, child: Text('Div $d'))).toList(),
+                          onChanged: (v) => setS(() => selectedDivision = v),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: selectedTutorId,
+                          decoration: const InputDecoration(labelText: 'Assign Tutor (optional)'),
+                          dropdownColor: AppColors.card,
+                          hint: const Text('Select Tutor', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                          items: tutors.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
+                          onChanged: (v) => setS(() => selectedTutorId = v),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx2), child: const Text('Cancel')),
+              GradientButton(
+                text: isLoading ? 'Creating…' : 'Create User',
+                icon: Icons.check_rounded,
+                onPressed: isLoading ? null : () async {
+                  if (!formKey.currentState!.validate()) return;
+                  setS(() => isLoading = true);
+                  try {
+                    await apiService.post('/auth/admin/create-user', {
+                      'name': nameCtrl.text.trim(),
+                      'email': emailCtrl.text.trim(),
+                      'password': pwCtrl.text.trim(),
+                      'role': selectedRole,
+                      if (regCtrl.text.trim().isNotEmpty) 'registerNo': regCtrl.text.trim(),
+                      if (deptCtrl.text.trim().isNotEmpty) 'dept': deptCtrl.text.trim(),
+                      if (selectedDeptId != null) 'departmentId': selectedDeptId,
+                      if (selectedTutorId != null) 'tutorId': selectedTutorId,
+                      if (selectedYear != null) 'year': selectedYear,
+                      if (selectedDivision != null) 'division': selectedDivision,
+                    });
+                    if (ctx2.mounted) {
+                      Navigator.pop(ctx2);
+                      ref.read(adminUserProvider.notifier).getUsers();
+                      ScaffoldMessenger.of(ctx2).showSnackBar(
+                        const SnackBar(content: Text('✅ User created successfully'), backgroundColor: AppColors.approved),
+                      );
+                    }
+                  } catch (e) {
+                    setS(() => isLoading = false);
+                    if (ctx2.mounted) {
+                      ScaffoldMessenger.of(ctx2).showSnackBar(
+                        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.rejected),
+                      );
+                    }
+                  }
+                },
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // IMPORT EXCEL
+  // ──────────────────────────────────────────────────────────────────────────
+  Future<void> _importExcel(BuildContext ctx) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx', 'xls', 'csv'],
+      withData: true,
+    );
+    if (result == null || result.files.single.bytes == null) return;
+
+    final file = result.files.single;
+    if (!ctx.mounted) return;
+
+    // Show loading
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        backgroundColor: AppColors.card,
+        content: Padding(
+          padding: EdgeInsets.all(24),
+          child: Row(children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            SizedBox(width: 20),
+            Text('Importing users…', style: TextStyle(color: AppColors.foreground)),
+          ]),
+        ),
+      ),
+    );
+
+    try {
+      final response = await apiService.multipartPost(
+        '/auth/admin/bulk-import',
+        {},
+        fileField: 'file',
+        bytes: file.bytes,
+        fileName: file.name,
+      ) as Map<String, dynamic>;
+
+      if (ctx.mounted) {
+        Navigator.pop(ctx); // close loading
+        ref.read(adminUserProvider.notifier).getUsers();
+
+        final created  = response['created'] ?? 0;
+        final skipped  = response['skipped'] ?? 0;
+        final errors   = (response['errors'] as List?)?.cast<String>() ?? [];
+
+        showDialog(
+          context: ctx,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppColors.card,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.summarize_rounded, color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Text('Import Results', style: AppTypography.headingSmall),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _importResultRow('✅ Created', '$created users', AppColors.approved),
+                _importResultRow('⏭ Skipped', '$skipped (already exist)', AppColors.secondary),
+                if (errors.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text('⚠️ ${errors.length} error(s):', style: const TextStyle(color: AppColors.rejected, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 150),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: errors.map((e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text('• $e', style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+                        )).toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              GradientButton(text: 'Done', onPressed: () => Navigator.pop(ctx), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (ctx.mounted) {
+        Navigator.pop(ctx); // close loading
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(content: Text('Import failed: $e'), backgroundColor: AppColors.rejected),
+        );
+      }
+    }
+  }
+
+  Widget _importResultRow(String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+          Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+
+
   void _showEditDialog(BuildContext ctx, UserModel user) {
     String selectedRole = user.role.toLowerCase();
     String? selectedDeptId = user.departmentId;
     int? selectedYear = user.year;
     String? selectedDivision = user.division;
     bool isApproved = user.isApproved;
+
 
     showDialog(
       context: ctx,
