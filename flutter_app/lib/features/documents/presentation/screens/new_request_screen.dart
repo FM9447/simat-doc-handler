@@ -281,6 +281,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
                             controller: _descCtrl,
                             style: const TextStyle(color: AppColors.foreground),
                             maxLines: 2,
+                            keyboardType: TextInputType.multiline,
                             decoration: const InputDecoration(labelText: 'Short Description', hintText: 'Optional notes…'),
                           ),
                           const SizedBox(height: 14),
@@ -391,7 +392,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
         _fieldCtrls.putIfAbsent(label, () => TextEditingController());
         return TextFormField(
           controller: _fieldCtrls[label],
-          keyboardType: el.type == 'number' ? TextInputType.number : TextInputType.text,
+          keyboardType: el.type == 'number' ? TextInputType.number : el.type == 'textarea' ? TextInputType.multiline : TextInputType.text,
           maxLines: el.type == 'textarea' ? 4 : 1,
           style: const TextStyle(color: AppColors.foreground),
           decoration: InputDecoration(

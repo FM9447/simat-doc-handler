@@ -103,6 +103,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   TextField(
                     controller: _contentCtrl,
                     maxLines: 5,
+                    keyboardType: TextInputType.multiline,
                     style: const TextStyle(color: AppColors.foreground),
                     decoration: InputDecoration(
                       labelText: 'Message',

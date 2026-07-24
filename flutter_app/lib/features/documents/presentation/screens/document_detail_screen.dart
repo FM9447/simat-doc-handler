@@ -784,6 +784,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
             style: const TextStyle(color: AppColors.foreground),
             decoration: const InputDecoration(labelText: 'Comments (Optional)', hintText: 'Add a note…'),
             maxLines: 2,
+            keyboardType: TextInputType.multiline,
           ),
           const SizedBox(height: 20),
           Row(
@@ -823,6 +824,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
           style: const TextStyle(color: AppColors.foreground),
           decoration: const InputDecoration(hintText: 'Enter reason for rejection…'),
           maxLines: 3,
+          keyboardType: TextInputType.multiline,
           autofocus: true,
         ),
         actions: [
