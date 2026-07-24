@@ -35,8 +35,18 @@ const documentSchema = mongoose.Schema({
   workflow: [{ type: String }], // Array of role names e.g. ['tutor', 'hod', 'principal']
   assigned: { type: Map, of: mongoose.Schema.Types.Mixed }, // Map of role -> { id, name }
   approvals: [approvalSchema],
+  documentCode: { type: String, unique: true }, // Short readable verification code
 }, {
   timestamps: true,
+});
+
+documentSchema.pre('save', function(next) {
+  if (!this.documentCode) {
+    // Generate a random 8-character uppercase hex string
+    const crypto = require('crypto');
+    this.documentCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+  }
+  next();
 });
 
 const Document = mongoose.model('Document', documentSchema);

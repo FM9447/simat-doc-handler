@@ -72,7 +72,14 @@ function buildHtml(data) {
 // @access  Public
 router.get('/:id', async function(req, res) {
   try {
-    var doc = await Document.findById(req.params.id)
+    const mongoose = require('mongoose');
+    const param = req.params.id;
+    let query = { documentCode: param };
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      query = { $or: [{ documentCode: param }, { _id: param }] };
+    }
+
+    var doc = await Document.findOne(query)
       .populate('studentId', 'name registerNo dept year division');
 
     if (!doc) {

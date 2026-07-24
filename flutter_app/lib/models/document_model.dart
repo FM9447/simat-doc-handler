@@ -22,6 +22,7 @@ class DocumentModel {
   final String? flow; // Workflow name
   final PriorityLevel priority;
   final DocumentStatus status;
+  final String? documentCode;
   final String? fileUrl;
   final String? studentSignatureUrl;
   final String? rejectionReason;
@@ -42,6 +43,7 @@ class DocumentModel {
     this.flow,
     required this.priority,
     this.status = DocumentStatus.pending,
+    this.documentCode,
     this.fileUrl,
     this.studentSignatureUrl,
     this.rejectionReason,
@@ -60,8 +62,9 @@ class DocumentModel {
       title: json['title'] ?? '',
       customHeading: json['customHeading'],
       description: json['description'] ?? '',
-      category: json['category'] ?? '',
+      category: json['category'] ?? 'General',
       flow: json['flow'],
+      documentCode: json['documentCode'],
       priority: _parsePriority(json['priority']),
       status: _parseStatus(json['status']),
       fileUrl: json['fileUrl'],
@@ -106,6 +109,7 @@ class DocumentModel {
       'description': description,
       'category': category,
       'flow': flow,
+      'documentCode': documentCode,
       'priority': priority.name,
       'status': _statusToString(status),
       'fileUrl': fileUrl,
