@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../providers/admin_provider.dart';
 import '../../../../providers/duty_category_provider.dart';
 import '../../../../models/user_model.dart';
@@ -14,6 +15,7 @@ import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/loading_logo.dart';
 import '../../../../shared/widgets/branded_title.dart';
 import '../../../../services/api_service.dart';
+import '../../../../core/constants/app_constants.dart';
 import 'department_management_screen.dart';
 import 'duty_category_management_screen.dart';
 
@@ -217,6 +219,26 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          FloatingActionButton.extended(
+            heroTag: 'download_template',
+            onPressed: () async {
+              final url = Uri.parse('${AppConstants.baseUrl}/auth/admin/bulk-import-template');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not launch template download link.')),
+                  );
+                }
+              }
+            },
+            backgroundColor: AppColors.background,
+            foregroundColor: AppColors.muted,
+            icon: const Icon(Icons.download_rounded, size: 20),
+            label: const Text('Download Template', style: TextStyle(fontSize: 13)),
+          ),
+          const SizedBox(height: 12),
           FloatingActionButton.extended(
             heroTag: 'import_excel',
             onPressed: () => _importExcel(context),

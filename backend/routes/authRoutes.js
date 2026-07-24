@@ -441,6 +441,40 @@ router.post('/admin/create-user', protect, authorizeRoles('admin'), async (req, 
   }
 });
 
+// @desc    Download Excel template for bulk import (Admin only)
+// @route   GET /api/auth/admin/bulk-import-template
+// @access  Public (or Private if token can be sent, but usually for download a public or query token is easier. Let's make it public for ease of download link, it only returns a blank template)
+router.get('/admin/bulk-import-template', (req, res) => {
+  try {
+    const templateData = [
+      {
+        name: 'John Doe',
+        email: 'john@simat.ac.in',
+        password: 'password123',
+        role: 'student',
+        registerNo: 'SIM21CS001',
+        dept: 'CSE',
+        year: 3,
+        division: 'A',
+        tutorEmail: 'tutor@simat.ac.in',
+        departmentId: '', // Optional
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Users');
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename="DocTransit_Users_Template.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @desc    Bulk import users from Excel/CSV (Admin only)
 // @route   POST /api/auth/admin/bulk-import
 // @access  Private (Admin only)
