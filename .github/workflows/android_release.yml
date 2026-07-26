@@ -51,7 +51,7 @@ jobs:
       # ── 5. Build release APK ──────────────────────────────────────────
       - name: Build release APK
         working-directory: flutter_app
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release
 
       # ── 6. Rename APK with version + date ─────────────────────────────
       - name: Rename APKs
@@ -59,9 +59,7 @@ jobs:
         run: |
           DATE=$(date +'%Y%m%d-%H%M')
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk  dist/DocTransit-arm64-${DATE}.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/DocTransit-arm32-${DATE}.apk
-          cp build/app/outputs/flutter-apk/app-release.apk             dist/DocTransit-universal-${DATE}.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/DocTransit-universal-${DATE}.apk
           echo "APK_DATE=${DATE}" >> $GITHUB_ENV
 
       # ── 7. Upload APK as GitHub artifact (30-day download link) ───────
@@ -80,4 +78,4 @@ jobs:
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           groups: testers
           releaseNotes: ${{ github.event.inputs.release_notes || format('Auto build — {0}', github.event.head_commit.message) }}
-          file: flutter_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          file: flutter_app/build/app/outputs/flutter-apk/app-release.apk
