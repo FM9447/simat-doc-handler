@@ -167,7 +167,7 @@ class NotificationService {
                 // Remove invalid token
                 User.findByIdAndUpdate(userId, {
                   $pull: { fcmTokens: user.fcmTokens[index] }
-                }).exec();
+                });
               }
             }
           });

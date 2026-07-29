@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+const { createModel, getModel } = require('../config/driveModel');
 
-const notificationSchema = mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  message: { type: String, required: true },
-  type: { type: String, enum: ['info', 'ok', 'err'], default: 'info' },
-  read: { type: Boolean, default: false },
-}, {
-  timestamps: true,
+module.exports = createModel({
+  modelName: 'Notification',
+  collection: 'notifications',
+  defaults: {
+    read: false,
+    type: 'info',
+  },
+  refs: {
+    userId: () => getModel('User'),
+  },
 });
-
-const Notification = mongoose.model('Notification', notificationSchema);
-module.exports = Notification;

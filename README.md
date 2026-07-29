@@ -34,9 +34,9 @@ DocTransit replaces traditional paper certificate requests with a digital workfl
 
 ```
 simat-doc-handler/
-├── backend/                  # Node.js / Express REST API & MongoDB models
+├── backend/                  # Node.js / Express REST API & Google Drive JSON DB models
 │   ├── config/               # Database & Cloudinary storage configuration
-│   ├── models/               # Mongoose schemas (User, Document, DocumentType, DutyCategory)
+│   ├── models/               # Drive-backed model wrappers (User, Document, DocumentType, DutyCategory)
 │   ├── routes/               # Express API endpoints
 │   ├── seed_flows.js         # KTU document template seeding script
 │   ├── clear_students_and_requests.js # Administrative data cleanup utility
@@ -61,7 +61,7 @@ Follow these step-by-step instructions to set up and run **DocTransit** locally.
 Ensure you have the following installed on your machine:
 - **Node.js**: v20.x or v24.x ([nodejs.org](https://nodejs.org/))
 - **Flutter SDK**: 3.24+ ([flutter.dev](https://flutter.dev/))
-- **MongoDB**: Local MongoDB daemon OR a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster string.
+- **Google Drive JSON DB**: deployed Google Apps Script endpoint and API key.
 - **Git**: Installed and configured.
 
 ---
@@ -81,8 +81,8 @@ Ensure you have the following installed on your machine:
 3. Create your environment configuration file `backend/.env`:
    ```env
    PORT=5000
-   MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/doctransit?retryWrites=true&w=majority
-   JWT_SECRET=your_secure_jwt_secret_key
+   DRIVE_DB_ENDPOINT=https://script.google.com/macros/s/<deployment-id>/exec
+   DRIVE_DB_API_KEY=<drive-db-api-key>
    CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
    CLOUDINARY_API_KEY=your_cloudinary_api_key
    CLOUDINARY_API_SECRET=your_cloudinary_api_secret
@@ -96,7 +96,7 @@ Ensure you have the following installed on your machine:
    # Standard node execution:
    node server.js
    ```
-   *Note: Upon successful connection, `connectDB()` automatically seeds/updates all KTU document templates into MongoDB.*
+   *Note: On startup, `connectDB()` automatically seeds/updates all KTU document templates into the Drive JSON DB backend.*
 
 ---
 

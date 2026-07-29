@@ -1,20 +1,24 @@
 const express = require('express');
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const { upload } = require('../config/cloudinary');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const NotificationService = require('../services/notificationService');
+const { callDriveDb, encodeSessionToken, sha256Hex } = require('../config/driveDb');
 
 // Multer for in-memory Excel/CSV uploads (admin bulk import)
 const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = express.Router();
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+const generateToken = (user) => {
+  return encodeSessionToken({
+    _id: user._id || user.id,
+    email: user.email,
+    role: user.role,
+    iat: Date.now(),
+  });
 };
 
 // @desc    Get API Version
@@ -82,9 +86,6 @@ router.post('/register', protect, authorizeRoles('admin'), async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     // Security: Prevent public registration as 'admin' or 'principal'
     let finalRole = role === 'teacher' ? 'tutor' : role;
     if (finalRole === 'admin' || finalRole === 'principal') {
@@ -94,21 +95,22 @@ router.post('/register', protect, authorizeRoles('admin'), async (req, res) => {
     // Students are auto-approved; staff roles (tutor, HOD, office) require admin approval
     const isApproved = finalRole === 'student';
 
-    const user = await User.create({
-      name, email, password: hashedPassword, role: finalRole, 
+    const registerResult = await callDriveDb('auth_register', 'users', {
+      name, email, password, role: finalRole,
       registerNo, dept, departmentId, tutorId, year, division,
       isApproved
     });
+    const user = await User.findById(registerResult?.data?._id) || registerResult?.data;
 
     if (user) {
       res.status(201).json({
-        _id: user.id, name: user.name, email: user.email, role: user.role, 
+        _id: user._id, name: user.name, email: user.email, role: user.role, 
         dept: user.dept, departmentId: user.departmentId, tutorId: user.tutorId,
         year: user.year, division: user.division,
         signatureUrl: user.signatureUrl,
         isApproved: user.isApproved,
         delegatedTo: user.delegatedTo,
-        token: generateToken(user.id),
+        token: generateToken(user),
       });
 
       // Notify Admin about new registration
@@ -133,10 +135,17 @@ router.post('/login', async (req, res) => {
   try {
     console.log('Login attempt:', req.body.email);
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    let authResult;
+    try {
+      authResult = await callDriveDb('auth_login', 'users', { email, password });
+    } catch (_) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      // Auto-approve student if legacy record was not approved
+    const authUser = authResult?.user || {};
+    const user = await User.findById(authUser._id) || await User.findOne({ email });
+
+    if (user) {
       if (user.role === 'student' && !user.isApproved) {
         user.isApproved = true;
         await user.save();
@@ -145,13 +154,13 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: 'Your account is pending approval by an administrator.' });
       }
       res.json({
-        _id: user.id, name: user.name, email: user.email, role: user.role, 
+        _id: user._id, name: user.name, email: user.email, role: user.role,
         dept: user.dept, departmentId: user.departmentId, tutorId: user.tutorId,
         year: user.year, division: user.division,
         signatureUrl: user.signatureUrl,
         isApproved: user.isApproved,
         delegatedTo: user.delegatedTo,
-        token: generateToken(user.id),
+        token: authResult?.token || generateToken(user),
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
@@ -233,9 +242,14 @@ router.put('/password', protect, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const user = await User.findById(req.user._id);
 
-    if (user && (await bcrypt.compare(oldPassword, user.password))) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
+    try {
+      await callDriveDb('auth_login', 'users', { email: user.email, password: oldPassword });
+    } catch (_) {
+      return res.status(401).json({ message: 'Invalid old password' });
+    }
+
+    if (user) {
+      user.password = sha256Hex(newPassword);
       await user.save();
       res.json({ message: 'Password updated successfully' });
     } else {
@@ -419,18 +433,17 @@ router.post('/admin/create-user', protect, authorizeRoles('admin'), async (req, 
     const exists = await User.findOne({ email: email.toLowerCase().trim() });
     if (exists) return res.status(400).json({ message: `User with email ${email} already exists` });
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
     const finalRole = role === 'teacher' ? 'tutor' : role;
 
-    const user = await User.create({
+    const registerResult = await callDriveDb('auth_register', 'users', {
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password: hashedPassword,
+      password,
       role: finalRole,
       registerNo, dept, departmentId, tutorId, year, division,
       isApproved: true, // Admin-created users are pre-approved
     });
+    const user = await User.findById(registerResult?.data?._id) || registerResult?.data;
 
     res.status(201).json({
       message: `User ${user.name} created successfully`,
@@ -521,12 +534,10 @@ router.post('/admin/bulk-import', protect, authorizeRoles('admin'), memUpload.si
       }
 
       try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
         const finalRole = role === 'teacher' ? 'tutor' : role;
 
-        await User.create({
-          name, email, password: hashedPassword,
+        await callDriveDb('auth_register', 'users', {
+          name, email, password,
           role: finalRole, registerNo, dept, year, division,
           departmentId: departmentId || undefined,
           tutorId: tutorId || undefined,
@@ -593,7 +604,7 @@ router.put('/delegate', protect, async (req, res) => {
       const uRole = user.role;
       const dRole = delegate.role;
 
-      if (uRole === 'tutor' && dRole === 'tutor' && delegate.departmentId.toString() === user.departmentId.toString()) {
+      if (uRole === 'tutor' && dRole === 'tutor' && String(delegate.departmentId || '') === String(user.departmentId || '')) {
         isValid = true;
       } else if (uRole === 'hod' && dRole === 'tutor') {
         // HOD can delegate to ANY tutor
@@ -650,4 +661,3 @@ router.put('/delegate', protect, async (req, res) => {
 });
 
 module.exports = router;
-

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Document = require('../models/Document');
+const Verify = require('../models/Verify');
 
 function buildHtml(data) {
   const {
@@ -72,15 +73,14 @@ function buildHtml(data) {
 // @access  Public
 router.get('/:id', async function(req, res) {
   try {
-    const mongoose = require('mongoose');
     const param = req.params.id;
-    let query = { documentCode: param };
-    if (mongoose.Types.ObjectId.isValid(param)) {
-      query = { $or: [{ documentCode: param }, { _id: param }] };
-    }
+    const query = { $or: [{ documentCode: param }, { _id: param }] };
 
-    var doc = await Document.findOne(query)
-      .populate('studentId', 'name registerNo dept year division');
+    const verifyDoc = await Verify.findOne(query);
+    var doc = await Document.findOne(query).populate('studentId', 'name registerNo dept year division');
+    if (!doc && verifyDoc) {
+      doc = verifyDoc;
+    }
 
     if (!doc) {
       return res.status(404).send(
@@ -128,7 +128,7 @@ router.get('/:id', async function(req, res) {
       statusBg: statusBg,
       statusLabel: statusLabel,
       approvalChain: approvalChain,
-      docId: doc._id.toString(),
+      docId: doc._id,
     }));
   } catch (e) {
     console.error('Verify route error:', e);

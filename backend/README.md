@@ -12,7 +12,7 @@ This is the backend for the SIMAT Smart Campus Document Handler and Campus Manag
 ## Tech Stack
 - **Runtime**: Node.js
 - **Framework**: Express.js
-- **Database**: MongoDB (Mongoose)
+- **Database**: Google Drive JSON DB (Google Apps Script Web App)
 - **File Storage**: Cloudinary (for uploads and signatures)
 
 ## Setup
@@ -20,7 +20,8 @@ This is the backend for the SIMAT Smart Campus Document Handler and Campus Manag
 2. Run `npm install`
 3. Create a `.env` file with the following variables:
    - `PORT` (default 5000)
-   - `MONGODB_URI`
+   - `DRIVE_DB_ENDPOINT` (optional, defaults to deployed Script URL)
+   - `DRIVE_DB_API_KEY`
    - `JWT_SECRET`
    - `CLOUDINARY_CLOUD_NAME`
    - `CLOUDINARY_API_KEY`

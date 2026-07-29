@@ -1,14 +1,14 @@
-const mongoose = require('mongoose');
+const { createModel, getModel } = require('../config/driveModel');
 
-const dutyCategorySchema = mongoose.Schema({
-  name: { type: String, required: true, unique: true }, // e.g. IEDC, NSS, MuLearn, IEEE, Sports, Arts
-  code: { type: String, required: true, unique: true }, // e.g. iedc, nss, mulearn
-  description: { type: String, default: '' },
-  facultyInChargeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Assigned Faculty / Nodal Officer
-  isActive: { type: Boolean, default: true },
-}, {
-  timestamps: true,
+module.exports = createModel({
+  modelName: 'DutyCategory',
+  collection: 'workflow',
+  baseFilter: { __kind: 'duty_category' },
+  defaults: {
+    description: '',
+    isActive: true,
+  },
+  refs: {
+    facultyInChargeId: () => getModel('User'),
+  },
 });
-
-const DutyCategory = mongoose.model('DutyCategory', dutyCategorySchema);
-module.exports = DutyCategory;

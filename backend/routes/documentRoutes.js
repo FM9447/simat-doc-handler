@@ -5,7 +5,7 @@ const DocumentType = require('../models/DocumentType');
 const User = require('../models/User');
 const Department = require('../models/Department');
 const Notification = require('../models/Notification');
-const mongoose = require('mongoose');
+const Verify = require('../models/Verify');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const { upload } = require('../config/cloudinary');
 const NotificationService = require('../services/notificationService');
@@ -18,15 +18,32 @@ async function resolveDelegateInfo(userId) {
 
   let currentUser = user;
   let visited = new Set();
-  while (currentUser && currentUser.delegatedTo && !visited.has(currentUser._id.toString())) {
-    visited.add(currentUser._id.toString());
+  while (currentUser && currentUser.delegatedTo && !visited.has(String(currentUser._id))) {
+    visited.add(String(currentUser._id));
     const delegate = await User.findById(currentUser.delegatedTo);
     if (!delegate) break;
     currentUser = delegate;
   }
-  return { id: currentUser._id.toString(), name: currentUser.name };
+  return { id: String(currentUser._id), name: currentUser.name };
 }
 const DutyCategory = require('../models/DutyCategory');
+
+async function syncVerifyRecord(document) {
+  if (!document || !document._id) return;
+  await Verify.findOneAndUpdate(
+    { documentId: document._id },
+    {
+      documentId: document._id,
+      documentCode: document.documentCode,
+      title: document.title,
+      category: document.flow || document.category,
+      status: document.status,
+      studentId: typeof document.studentId === 'object' ? document.studentId._id : document.studentId,
+      approvals: document.approvals || [],
+    },
+    { upsert: true, new: true }
+  );
+}
 
 // Helper: auto-assign approvers by role, student's tutor, and dept HOD
 async function autoAssign(steps, student, formData) {
@@ -120,6 +137,7 @@ router.post('/', protect, authorizeRoles('student'), upload.single('file'), asyn
     });
 
     const createdDoc = await document.save();
+    await syncVerifyRecord(createdDoc);
     console.log('Document created successfully:', createdDoc._id);
 
     // Push notification to first approver
@@ -229,6 +247,7 @@ router.post('/:id/approve', protect, upload.single('signature'), async (req, res
     }
 
     const updatedDoc = await document.save();
+    await syncVerifyRecord(updatedDoc);
     res.json(updatedDoc);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -263,6 +282,7 @@ router.post('/:id/mark-duty-leave', protect, async (req, res) => {
 
     document.status = 'final_approved';
     await document.save();
+    await syncVerifyRecord(document);
 
     await NotificationService.send(
       document.studentId,
@@ -321,6 +341,7 @@ router.post('/:id/transfer', protect, async (req, res) => {
     });
 
     await document.save();
+    await syncVerifyRecord(document);
 
     // Notify new recipient
     await NotificationService.send(newApproverId, `A document "${document.title}" has been transferred to you for ${role.toUpperCase()} approval by ${req.user.name}.`, 'info');
@@ -349,7 +370,7 @@ router.put('/:id', protect, async (req, res) => {
 
     if (user.role === 'admin') {
       canEdit = true;
-    } else if (user.role === 'student' && document.studentId.toString() === user.id && document.status === 'pending') {
+    } else if (user.role === 'student' && String(document.studentId?._id || document.studentId) === user.id && document.status === 'pending') {
       canEdit = true;
     } else {
       // Check if user is currently assigned to any role in this document
@@ -377,6 +398,7 @@ router.put('/:id', protect, async (req, res) => {
     }
 
     await document.save();
+    await syncVerifyRecord(document);
     res.json(document);
   } catch (error) {
     console.error('Document update error:', error);

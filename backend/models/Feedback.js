@@ -1,33 +1,13 @@
-const mongoose = require('mongoose');
+const { createModel, getModel } = require('../config/driveModel');
 
-const feedbackSchema = mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User'
+module.exports = createModel({
+  modelName: 'Feedback',
+  collection: 'feedback',
+  defaults: {
+    type: 'feedback',
+    status: 'open',
   },
-  type: {
-    type: String,
-    required: true,
-    enum: ['feedback', 'report', 'bug', 'other'],
-    default: 'feedback'
+  refs: {
+    user: () => getModel('User'),
   },
-  title: {
-    type: String,
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    required: true,
-    enum: ['open', 'reviewed', 'resolved'],
-    default: 'open'
-  }
-}, {
-  timestamps: true
 });
-
-module.exports = mongoose.model('Feedback', feedbackSchema);

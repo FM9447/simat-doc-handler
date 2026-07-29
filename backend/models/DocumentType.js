@@ -1,47 +1,19 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../config/driveModel');
 
-const elementSchema = mongoose.Schema({
-  id: { type: String, required: true },
-  kind: { type: String, enum: ['field', 'system', 'header', 'address', 'divider', 'seal', 'header_image'], default: 'field' },
-  label: { type: String },
-  type: { type: String, enum: ['text', 'number', 'date', 'textarea', 'select', 'checkbox', 'table'], default: 'text' },
-  required: { type: Boolean, default: false },
-  visible: { type: Boolean, default: true },
-  placeholder: { type: String, default: '' },
-  hint: { type: String, default: '' },
-  pattern: { type: String, default: '' },
-  options: [{ type: String }],
-  sysKey: { type: String },
-  content: { type: String },
-  imageUrl: { type: String },
-  x: { type: Number, default: 20 },
-  y: { type: Number, default: 20 },
-  w: { type: Number, default: 200 },
-  h: { type: Number, default: 30 },
-}, { _id: false });
-
-const documentTypeSchema = mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  steps: [{ 
-    type: String, 
-    enum: ['nodal_officer', 'club_handler', 'mentor', 'tutor', 'hod', 'principal', 'office', 'admin'],
-    required: true 
-  }],
-  elements: [elementSchema],
-  letterTemplate: { type: String, default: '' },
-  allowCustomHeading: { type: Boolean, default: false },
-  includeLetterhead: { type: Boolean, default: true },
-  includeRefDate: { type: Boolean, default: true },
-  includeSeal: { type: Boolean, default: false },
-  customHeaderUrl: { type: String },
-  customApprovedSealUrl: { type: String },
-  customRejectedSealUrl: { type: String },
-  isFormBased: { type: Boolean, default: false },
-  requiredFields: [{ type: String }],
-  isActive: { type: Boolean, default: true }
-}, {
-  timestamps: true,
+module.exports = createModel({
+  modelName: 'DocumentType',
+  collection: 'workflow',
+  baseFilter: { __kind: 'document_type' },
+  defaults: {
+    steps: [],
+    elements: [],
+    letterTemplate: '',
+    allowCustomHeading: false,
+    includeLetterhead: true,
+    includeRefDate: true,
+    includeSeal: false,
+    isFormBased: false,
+    requiredFields: [],
+    isActive: true,
+  },
 });
-
-const DocumentType = mongoose.model('DocumentType', documentTypeSchema);
-module.exports = DocumentType;

@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { decodeSessionToken } = require('../config/driveDb');
 
 const protect = async (req, res, next) => {
   let token;
@@ -7,12 +7,28 @@ const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
-      if (!req.user) {
+      const decoded = decodeSessionToken(token);
+
+      if (!decoded) {
+        return res.status(401).json({ message: 'Not authorized, token failed' });
+      }
+
+      const decodedUser = decoded.user && typeof decoded.user === 'object' ? decoded.user : decoded;
+      const userId = decodedUser._id || decodedUser.id || decodedUser.userId;
+      const email = decodedUser.email;
+
+      let user = null;
+      if (userId) user = await User.findById(userId);
+      if (!user && email) user = await User.findOne({ email: String(email).toLowerCase().trim() });
+
+      if (!user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
+
+      user.id = user._id;
+      req.user = user;
       next();
+      return;
     } catch (error) {
       console.error('Auth error:', error);
       return res.status(401).json({ message: 'Not authorized, token failed' });
